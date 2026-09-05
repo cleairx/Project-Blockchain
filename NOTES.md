@@ -35,8 +35,9 @@ implementing the whole standard. Documented as a deliberate scope choice.
 ## Status
 
 - [x] Repo structure
-- [ ] Mock USDC (test asset)
-- [ ] Core contract: ERC-20 shares, subscribe, redeem
+- [x] Foundry + OpenZeppelin v5.7.0 installed, `forge build` passing
+- [x] Mock USDC (test asset)
+- [x] Core contract: ERC-20 shares, subscribe, redeem
 - [ ] NAV accrual over time
 - [ ] Whitelist / compliance layer
 - [ ] Admin controls: freeze, force-transfer
@@ -44,6 +45,15 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [ ] Deploy to Base Sepolia
 - [ ] README with architecture diagram
 - [ ] Walkthrough video
+
+## Next session (3 hours)
+
+1. Install Claude Code, open this folder
+2. NAV accrual from elapsed time, then tests for it
+3. Whitelist-gated transfers + freeze, then tests for it
+
+Priority if time runs short: tests matter more than features. A smaller
+tested contract beats a larger untested one.
 
 ## Open questions to resolve
 
