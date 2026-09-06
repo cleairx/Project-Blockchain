@@ -60,9 +60,38 @@ implementing the whole standard. Documented as a deliberate scope choice.
 
 ## Next session
 
-1. Deploy to Base Sepolia and paste the contract address into the README
-2. Do one live subscribe on the testnet, to have something to show
-3. Record the walkthrough video
+All contract work is finished and verified. Nothing left to code. Two jobs:
+put it on a live testnet, and record the video.
+
+### Deploying, step by step
+
+1. Make a throwaway wallet — `cast wallet new`. Never use a wallet holding
+   real funds, and never paste the private key anywhere but `.env`.
+2. Fund it with test ETH from a Base Sepolia faucet:
+   https://docs.base.org/chain/network-faucets
+3. `cp .env.example .env`, then put the private key in it. `.env` is
+   gitignored and must stay that way.
+4. Deploy:
+   ```
+   source .env
+   forge script script/Deploy.s.sol:Deploy --rpc-url base_sepolia --broadcast
+   ```
+5. Paste the printed `TokenizedFund` address into the README, replacing
+   "not yet deployed".
+6. Do one live `subscribe` against the deployed contract, so there is a real
+   transaction to point at in the video.
+
+### Then the video
+
+Two minutes. Suggested beats: what a tokenized money market fund is, why NAV
+rises instead of the balance, why a rising NAV has to be funded, and why the
+transfer agent needs `forceTransfer`.
+
+### Housekeeping
+
+All work sits on branch `claude/claude-code-blockchain-setup-x2gfc6`, not on
+`main`. Merge it when ready — "Squash and merge" collapses it into a single
+commit whose message is editable before confirming.
 
 Priority if time runs short: tests matter more than features. A smaller
 tested contract beats a larger untested one.
