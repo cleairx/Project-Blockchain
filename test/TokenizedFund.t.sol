@@ -14,6 +14,8 @@ contract TokenizedFundTest is Test {
 
     address internal admin = address(0xA11CE);
     address internal investor = address(0xB0B);
+    address internal investor2 = address(0xCA1E);
+    address internal outsider = address(0xDEAD);
 
     uint256 internal constant ONE_DOLLAR = 1e18; // NAV fixed-point scale
     uint256 internal constant ONE_YEAR = 365 days;
@@ -34,6 +36,13 @@ contract TokenizedFundTest is Test {
         usdc.mint(admin, DEPOSIT);
         vm.prank(admin);
         usdc.approve(address(fund), type(uint256).max);
+
+        // Shares are a security: holders must be on the register before they
+        // can receive any. `outsider` is deliberately left off it.
+        vm.startPrank(admin);
+        fund.setWhitelisted(investor, true);
+        fund.setWhitelisted(investor2, true);
+        vm.stopPrank();
     }
 
     // -------------------------------------------------------------------
@@ -185,5 +194,164 @@ contract TokenizedFundTest is Test {
 
         // At $1.05 a share, 1,000 USDC buys ~952.38 shares, not 1,000.
         assertEq(fund.balanceOf(investor), 952_380952);
+    }
+
+    // -------------------------------------------------------------------
+    // The eligible-holder register
+    // -------------------------------------------------------------------
+
+    function test_UnapprovedAddressCannotSubscribe() public {
+        usdc.mint(outsider, DEPOSIT);
+
+        vm.startPrank(outsider);
+        usdc.approve(address(fund), type(uint256).max);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.NotWhitelisted.selector, outsider)
+        );
+        fund.subscribe(DEPOSIT);
+        vm.stopPrank();
+    }
+
+    function test_TransferBetweenApprovedHoldersWorks() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.prank(investor);
+        fund.transfer(investor2, 400e6);
+
+        assertEq(fund.balanceOf(investor), 600e6);
+        assertEq(fund.balanceOf(investor2), 400e6);
+    }
+
+    function test_TransferToUnapprovedAddressFails() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.prank(investor);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.NotWhitelisted.selector, outsider)
+        );
+        fund.transfer(outsider, 1e6);
+    }
+
+    function test_RevokingApprovalBlocksFurtherSending() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        // Struck off the register — the shares stay put, but cannot move.
+        vm.prank(admin);
+        fund.setWhitelisted(investor, false);
+
+        assertEq(fund.balanceOf(investor), DEPOSIT);
+
+        vm.prank(investor);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.NotWhitelisted.selector, investor)
+        );
+        fund.transfer(investor2, 1e6);
+    }
+
+    // -------------------------------------------------------------------
+    // Freezing
+    // -------------------------------------------------------------------
+
+    function test_FrozenHolderCannotSend() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.prank(admin);
+        fund.setFrozen(investor, true);
+
+        vm.prank(investor);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.AccountFrozen.selector, investor)
+        );
+        fund.transfer(investor2, 1e6);
+    }
+
+    function test_FrozenHolderCannotReceive() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.prank(admin);
+        fund.setFrozen(investor2, true);
+
+        vm.prank(investor);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.AccountFrozen.selector, investor2)
+        );
+        fund.transfer(investor2, 1e6);
+    }
+
+    function test_FrozenHolderCannotRedeem() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.prank(admin);
+        fund.setFrozen(investor, true);
+
+        vm.prank(investor);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.AccountFrozen.selector, investor)
+        );
+        fund.redeem(100e6);
+    }
+
+    function test_UnfreezingRestoresNormalTransfers() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.startPrank(admin);
+        fund.setFrozen(investor, true);
+        fund.setFrozen(investor, false);
+        vm.stopPrank();
+
+        vm.prank(investor);
+        fund.transfer(investor2, 1e6);
+
+        assertEq(fund.balanceOf(investor2), 1e6);
+    }
+
+    // -------------------------------------------------------------------
+    // Transfer agent powers
+    // -------------------------------------------------------------------
+
+    function test_ForceTransferMovesSharesFromAFrozenHolder() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.startPrank(admin);
+        fund.setFrozen(investor, true);
+        // Court order, lost keys, inheritance: the agent moves them anyway.
+        fund.forceTransfer(investor, investor2, DEPOSIT);
+        vm.stopPrank();
+
+        assertEq(fund.balanceOf(investor), 0);
+        assertEq(fund.balanceOf(investor2), DEPOSIT);
+    }
+
+    function test_ForceTransferStillRequiresAnApprovedDestination() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.NotWhitelisted.selector, outsider)
+        );
+        fund.forceTransfer(investor, outsider, 1e6);
+    }
+
+    function test_OnlyComplianceRoleCanManageTheRegister() public {
+        vm.prank(investor);
+        vm.expectRevert();
+        fund.setWhitelisted(outsider, true);
+
+        vm.prank(investor);
+        vm.expectRevert();
+        fund.setFrozen(investor2, true);
+
+        vm.prank(investor);
+        vm.expectRevert();
+        fund.forceTransfer(investor, investor2, 1e6);
     }
 }

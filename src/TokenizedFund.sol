@@ -23,6 +23,11 @@ contract TokenizedFund is ERC20, AccessControl {
     ///         this is the administrator striking the daily NAV.
     bytes32 public constant NAV_UPDATER_ROLE = keccak256("NAV_UPDATER_ROLE");
 
+    /// @notice Permitted to maintain the eligible-holder register: approving and
+    ///         revoking holders, freezing accounts, and forcing transfers. This
+    ///         is the transfer agent's role in a real fund.
+    bytes32 public constant COMPLIANCE_ROLE = keccak256("COMPLIANCE_ROLE");
+
     // -------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------
@@ -58,6 +63,14 @@ contract TokenizedFund is ERC20, AccessControl {
     /// @notice Timestamp the checkpoint above was last written.
     uint256 public lastAccrualTime;
 
+    /// @notice The eligible-holder register. Shares are a security, so only
+    ///         approved addresses may hold them.
+    mapping(address => bool) public isWhitelisted;
+
+    /// @notice Accounts blocked from moving shares in either direction, while
+    ///         remaining on the register. Used for sanctions hits and disputes.
+    mapping(address => bool) public isFrozen;
+
     // -------------------------------------------------------------------
     // Events
     // -------------------------------------------------------------------
@@ -82,6 +95,12 @@ contract TokenizedFund is ERC20, AccessControl {
 
     event YieldDeposited(address indexed from, uint256 amount);
 
+    event WhitelistUpdated(address indexed account, bool approved);
+
+    event FrozenUpdated(address indexed account, bool frozen);
+
+    event ForcedTransfer(address indexed from, address indexed to, uint256 value);
+
     // -------------------------------------------------------------------
     // Errors
     // -------------------------------------------------------------------
@@ -89,6 +108,8 @@ contract TokenizedFund is ERC20, AccessControl {
     error ZeroAmount();
     error RateTooHigh(uint256 requested, uint256 maximum);
     error InsufficientLiquidity(uint256 requested, uint256 available);
+    error NotWhitelisted(address account);
+    error AccountFrozen(address account);
 
     // -------------------------------------------------------------------
     // Constructor
@@ -111,6 +132,7 @@ contract TokenizedFund is ERC20, AccessControl {
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(NAV_UPDATER_ROLE, _admin);
+        _grantRole(COMPLIANCE_ROLE, _admin);
     }
 
     /// @dev Match the asset's 6 decimals so subscribe/redeem needs no rescaling.
@@ -235,6 +257,69 @@ contract TokenizedFund is ERC20, AccessControl {
         asset.safeTransferFrom(msg.sender, address(this), amount);
 
         emit YieldDeposited(msg.sender, amount);
+    }
+
+    // -------------------------------------------------------------------
+    // Compliance
+    // -------------------------------------------------------------------
+
+    /// @notice Add or remove an address from the eligible-holder register.
+    /// @dev Revoking does not claw back shares already held. It stops the holder
+    ///      acquiring or sending more; the transfer agent uses `forceTransfer`
+    ///      to actually move them out.
+    function setWhitelisted(address account, bool approved)
+        external
+        onlyRole(COMPLIANCE_ROLE)
+    {
+        isWhitelisted[account] = approved;
+        emit WhitelistUpdated(account, approved);
+    }
+
+    /// @notice Freeze or unfreeze an account. A frozen holder stays on the
+    ///         register but cannot send, receive, or redeem.
+    function setFrozen(address account, bool frozen) external onlyRole(COMPLIANCE_ROLE) {
+        isFrozen[account] = frozen;
+        emit FrozenUpdated(account, frozen);
+    }
+
+    /// @notice Move shares between holders without the sender's consent.
+    /// @dev The transfer agent power. Real funds need this for court orders,
+    ///      lost keys, and inheritance. The destination must still be eligible,
+    ///      so shares can never be forced onto an unapproved address.
+    function forceTransfer(address from, address to, uint256 value)
+        external
+        onlyRole(COMPLIANCE_ROLE)
+    {
+        if (!isWhitelisted[to]) revert NotWhitelisted(to);
+
+        // Deliberately calls the parent implementation, bypassing the gate in
+        // this contract's `_update`. That bypass is the whole point: the sender
+        // may be frozen or already struck off the register.
+        super._update(from, to, value);
+
+        emit ForcedTransfer(from, to, value);
+    }
+
+    /// @dev Single hook every mint, burn, and transfer passes through in
+    ///      OpenZeppelin v5. `from == address(0)` is a mint (subscription) and
+    ///      `to == address(0)` is a burn (redemption).
+    function _update(address from, address to, uint256 value) internal override {
+        if (from == address(0)) {
+            // Subscribing: the new holder must be eligible and not frozen.
+            if (!isWhitelisted[to]) revert NotWhitelisted(to);
+            if (isFrozen[to]) revert AccountFrozen(to);
+        } else if (to == address(0)) {
+            // Redeeming: a frozen holder cannot cash out.
+            if (isFrozen[from]) revert AccountFrozen(from);
+        } else {
+            // Transferring: both sides must be eligible and unfrozen.
+            if (!isWhitelisted[from]) revert NotWhitelisted(from);
+            if (!isWhitelisted[to]) revert NotWhitelisted(to);
+            if (isFrozen[from]) revert AccountFrozen(from);
+            if (isFrozen[to]) revert AccountFrozen(to);
+        }
+
+        super._update(from, to, value);
     }
 
     // -------------------------------------------------------------------
