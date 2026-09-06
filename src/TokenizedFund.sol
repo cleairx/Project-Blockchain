@@ -19,9 +19,27 @@ contract TokenizedFund is ERC20, AccessControl {
     // Roles
     // -------------------------------------------------------------------
 
-    /// @notice Permitted to update NAV. In a real fund this is the administrator
-    ///         striking the daily NAV.
+    /// @notice Permitted to set the yield rate and deposit yield. In a real fund
+    ///         this is the administrator striking the daily NAV.
     bytes32 public constant NAV_UPDATER_ROLE = keccak256("NAV_UPDATER_ROLE");
+
+    // -------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------
+
+    /// @dev Fixed-point scale for navPerShare arithmetic. 1e18 == $1.00.
+    uint256 private constant NAV_PRECISION = 1e18;
+
+    /// @dev Basis points denominator. 10_000 bps == 100%.
+    uint256 private constant BPS_DENOMINATOR = 10_000;
+
+    /// @dev Accrual year length. Money market funds quote yields on an annual
+    ///      basis, so elapsed seconds are measured against this.
+    uint256 private constant SECONDS_PER_YEAR = 365 days;
+
+    /// @dev Sanity ceiling on the yield rate. A money market fund earning more
+    ///      than 20% a year is a bug, not a windfall.
+    uint256 private constant MAX_ANNUAL_RATE_BPS = 2_000;
 
     // -------------------------------------------------------------------
     // State
@@ -30,11 +48,15 @@ contract TokenizedFund is ERC20, AccessControl {
     /// @notice The stablecoin investors subscribe and redeem with.
     IERC20 public immutable asset;
 
-    /// @notice Value of one share, as 18-decimal fixed point. 1e18 == $1.00.
-    uint256 public navPerShare;
+    /// @notice Annual yield rate in basis points. 500 == 5.00% a year.
+    uint256 public annualRateBps;
 
-    /// @dev Fixed-point scale for navPerShare arithmetic.
-    uint256 private constant NAV_PRECISION = 1e18;
+    /// @dev NAV per share as of `lastAccrualTime`. Reading the live value should
+    ///      go through `currentNavPerShare()`, which adds yield since then.
+    uint256 public navPerShareCheckpoint;
+
+    /// @notice Timestamp the checkpoint above was last written.
+    uint256 public lastAccrualTime;
 
     // -------------------------------------------------------------------
     // Events
@@ -54,14 +76,18 @@ contract TokenizedFund is ERC20, AccessControl {
         uint256 navPerShare
     );
 
-    event NavUpdated(uint256 oldNav, uint256 newNav);
+    event Accrued(uint256 oldNav, uint256 newNav, uint256 elapsedSeconds);
+
+    event RateUpdated(uint256 oldRateBps, uint256 newRateBps);
+
+    event YieldDeposited(address indexed from, uint256 amount);
 
     // -------------------------------------------------------------------
     // Errors
     // -------------------------------------------------------------------
 
     error ZeroAmount();
-    error NavCannotDecrease();
+    error RateTooHigh(uint256 requested, uint256 maximum);
     error InsufficientLiquidity(uint256 requested, uint256 available);
 
     // -------------------------------------------------------------------
@@ -70,11 +96,18 @@ contract TokenizedFund is ERC20, AccessControl {
 
     /// @param _asset The stablecoin used for subscription and redemption.
     /// @param _admin Address granted both admin and NAV updater roles.
-    constructor(IERC20 _asset, address _admin)
+    /// @param _annualRateBps Starting annual yield, in basis points.
+    constructor(IERC20 _asset, address _admin, uint256 _annualRateBps)
         ERC20("Tokenized Treasury Fund", "TTF")
     {
+        if (_annualRateBps > MAX_ANNUAL_RATE_BPS) {
+            revert RateTooHigh(_annualRateBps, MAX_ANNUAL_RATE_BPS);
+        }
+
         asset = _asset;
-        navPerShare = NAV_PRECISION; // Fund launches at exactly $1.00 per share
+        annualRateBps = _annualRateBps;
+        navPerShareCheckpoint = NAV_PRECISION; // Fund launches at exactly $1.00
+        lastAccrualTime = block.timestamp;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
         _grantRole(NAV_UPDATER_ROLE, _admin);
@@ -83,6 +116,46 @@ contract TokenizedFund is ERC20, AccessControl {
     /// @dev Match the asset's 6 decimals so subscribe/redeem needs no rescaling.
     function decimals() public pure override returns (uint8) {
         return 6;
+    }
+
+    // -------------------------------------------------------------------
+    // NAV accrual
+    // -------------------------------------------------------------------
+
+    /// @notice NAV per share right now, including yield earned since the last
+    ///         checkpoint. This is the price subscriptions and redemptions use.
+    /// @dev Simple (non-compounding) interest over elapsed time. Real money
+    ///      market funds accrue daily on a simple basis, so this mirrors them
+    ///      and keeps the arithmetic auditable by hand.
+    function currentNavPerShare() public view returns (uint256) {
+        uint256 elapsed = block.timestamp - lastAccrualTime;
+        if (elapsed == 0 || annualRateBps == 0) {
+            return navPerShareCheckpoint;
+        }
+
+        uint256 growth = (navPerShareCheckpoint * annualRateBps * elapsed)
+            / (BPS_DENOMINATOR * SECONDS_PER_YEAR);
+
+        return navPerShareCheckpoint + growth;
+    }
+
+    /// @notice Write the accrued NAV into storage and restart the clock.
+    /// @dev Called before any action that depends on the price, and before any
+    ///      rate change, so yield already earned is locked in at the old rate.
+    function accrue() public {
+        uint256 updated = currentNavPerShare();
+        if (updated == navPerShareCheckpoint) {
+            lastAccrualTime = block.timestamp;
+            return;
+        }
+
+        uint256 oldNav = navPerShareCheckpoint;
+        uint256 elapsed = block.timestamp - lastAccrualTime;
+
+        navPerShareCheckpoint = updated;
+        lastAccrualTime = block.timestamp;
+
+        emit Accrued(oldNav, updated, elapsed);
     }
 
     // -------------------------------------------------------------------
@@ -95,15 +168,17 @@ contract TokenizedFund is ERC20, AccessControl {
     function subscribe(uint256 assetAmount) external returns (uint256 sharesOut) {
         if (assetAmount == 0) revert ZeroAmount();
 
+        accrue();
+
         // shares = assets / navPerShare
-        sharesOut = (assetAmount * NAV_PRECISION) / navPerShare;
+        sharesOut = (assetAmount * NAV_PRECISION) / navPerShareCheckpoint;
         if (sharesOut == 0) revert ZeroAmount();
 
         // Pull the investor's stablecoin in, then issue their shares.
         asset.safeTransferFrom(msg.sender, address(this), assetAmount);
         _mint(msg.sender, sharesOut);
 
-        emit Subscribed(msg.sender, assetAmount, sharesOut, navPerShare);
+        emit Subscribed(msg.sender, assetAmount, sharesOut, navPerShareCheckpoint);
     }
 
     /// @notice Burn shares and receive assets back at the current NAV.
@@ -112,8 +187,10 @@ contract TokenizedFund is ERC20, AccessControl {
     function redeem(uint256 shareAmount) external returns (uint256 assetsOut) {
         if (shareAmount == 0) revert ZeroAmount();
 
+        accrue();
+
         // assets = shares * navPerShare
-        assetsOut = (shareAmount * navPerShare) / NAV_PRECISION;
+        assetsOut = (shareAmount * navPerShareCheckpoint) / NAV_PRECISION;
 
         uint256 available = asset.balanceOf(address(this));
         if (assetsOut > available) {
@@ -124,24 +201,40 @@ contract TokenizedFund is ERC20, AccessControl {
         _burn(msg.sender, shareAmount);
         asset.safeTransfer(msg.sender, assetsOut);
 
-        emit Redeemed(msg.sender, shareAmount, assetsOut, navPerShare);
+        emit Redeemed(msg.sender, shareAmount, assetsOut, navPerShareCheckpoint);
     }
 
     // -------------------------------------------------------------------
     // Administration
     // -------------------------------------------------------------------
 
-    /// @notice Set a new NAV per share, reflecting yield earned on the holdings.
-    /// @dev Restricted to NAV_UPDATER_ROLE. A money market fund holding T-bills
-    ///      should not mark down, so decreases are rejected as a safety check.
-    /// @param newNav New value of one share, 18-decimal fixed point.
-    function updateNav(uint256 newNav) external onlyRole(NAV_UPDATER_ROLE) {
-        if (newNav < navPerShare) revert NavCannotDecrease();
+    /// @notice Change the annual yield rate going forward.
+    /// @dev Accrues first, so the new rate never rewrites yield already earned.
+    /// @param newRateBps New annual rate in basis points.
+    function setAnnualRate(uint256 newRateBps) external onlyRole(NAV_UPDATER_ROLE) {
+        if (newRateBps > MAX_ANNUAL_RATE_BPS) {
+            revert RateTooHigh(newRateBps, MAX_ANNUAL_RATE_BPS);
+        }
 
-        uint256 oldNav = navPerShare;
-        navPerShare = newNav;
+        accrue();
 
-        emit NavUpdated(oldNav, newNav);
+        uint256 oldRateBps = annualRateBps;
+        annualRateBps = newRateBps;
+
+        emit RateUpdated(oldRateBps, newRateBps);
+    }
+
+    /// @notice Pay the interest earned on the underlying holdings into the fund.
+    /// @dev NAV rising is only a promise; this is what makes it payable. Without
+    ///      it the fund owes redeemers more than it holds. In a real fund this is
+    ///      the manager depositing T-bill coupon proceeds as they settle.
+    /// @param amount Amount of the stablecoin to deposit, in 6 decimals.
+    function depositYield(uint256 amount) external onlyRole(NAV_UPDATER_ROLE) {
+        if (amount == 0) revert ZeroAmount();
+
+        asset.safeTransferFrom(msg.sender, address(this), amount);
+
+        emit YieldDeposited(msg.sender, amount);
     }
 
     // -------------------------------------------------------------------
@@ -150,11 +243,23 @@ contract TokenizedFund is ERC20, AccessControl {
 
     /// @notice Current value of an investor's holding, in asset terms.
     function balanceInAssets(address investor) external view returns (uint256) {
-        return (balanceOf(investor) * navPerShare) / NAV_PRECISION;
+        return (balanceOf(investor) * currentNavPerShare()) / NAV_PRECISION;
     }
 
     /// @notice Total value of all shares outstanding, in asset terms.
     function totalAssetsUnderManagement() external view returns (uint256) {
-        return (totalSupply() * navPerShare) / NAV_PRECISION;
+        return (totalSupply() * currentNavPerShare()) / NAV_PRECISION;
+    }
+
+    /// @notice Stablecoin the fund actually holds right now.
+    function assetsHeld() public view returns (uint256) {
+        return asset.balanceOf(address(this));
+    }
+
+    /// @notice True when the fund holds enough to pay every share at today's NAV.
+    /// @dev False means yield has accrued that has not yet been deposited, so
+    ///      late redeemers would be unable to exit.
+    function isFullyBacked() external view returns (bool) {
+        return assetsHeld() >= (totalSupply() * currentNavPerShare()) / NAV_PRECISION;
     }
 }
