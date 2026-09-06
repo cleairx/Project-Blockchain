@@ -28,6 +28,16 @@ matching the share token to it keeps subscribe/redeem math free of scaling
 conversions. NAV per share is tracked separately as an 18-decimal fixed-point
 number, where 1e18 represents exactly $1.00.
 
+**Accrual is simple interest, not compound.** NAV grows linearly with elapsed
+time against a stored annual rate. Real money market funds accrue daily on a
+simple basis, so this matches them and the arithmetic can be checked by hand.
+
+**Rising NAV must be funded.** A NAV that rises on its own is only a promise —
+the contract would owe redeemers more than it holds, and late redeemers could
+not exit. `depositYield` is how the manager pays the interest in, mirroring
+T-bill coupon proceeds settling. `isFullyBacked` reports whether the promise is
+currently covered. There is a test for the failure case, not just the happy one.
+
 **Whitelist over full ERC-3643.** A single mapping checked on transfer captures
 the concept (transfer restriction on a security) without the weight of
 implementing the whole standard. Documented as a deliberate scope choice.
@@ -38,19 +48,50 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [x] Foundry + OpenZeppelin v5.7.0 installed, `forge build` passing
 - [x] Mock USDC (test asset)
 - [x] Core contract: ERC-20 shares, subscribe, redeem
-- [ ] NAV accrual over time
-- [ ] Whitelist / compliance layer
-- [ ] Admin controls: freeze, force-transfer
-- [ ] Foundry tests (target 10-12)
-- [ ] Deploy to Base Sepolia
-- [ ] README with architecture diagram
+- [x] NAV accrual over time (simple interest from an annual rate)
+- [x] Yield funding via `depositYield`, plus `isFullyBacked` view
+- [x] Whitelist / compliance layer gated through the v5 `_update` hook
+- [x] Admin controls: freeze, force-transfer, COMPLIANCE_ROLE
+- [x] Foundry tests — 24 passing
+- [x] README with architecture diagram
+- [x] Deploy script and `.env.example`
+- [ ] Deploy to Base Sepolia, record the address in the README
 - [ ] Walkthrough video
 
-## Next session (3 hours)
+## Next session
 
-1. Install Claude Code, open this folder
-2. NAV accrual from elapsed time, then tests for it
-3. Whitelist-gated transfers + freeze, then tests for it
+All contract work is finished and verified. Nothing left to code. Two jobs:
+put it on a live testnet, and record the video.
+
+### Deploying, step by step
+
+1. Make a throwaway wallet — `cast wallet new`. Never use a wallet holding
+   real funds, and never paste the private key anywhere but `.env`.
+2. Fund it with test ETH from a Base Sepolia faucet:
+   https://docs.base.org/chain/network-faucets
+3. `cp .env.example .env`, then put the private key in it. `.env` is
+   gitignored and must stay that way.
+4. Deploy:
+   ```
+   source .env
+   forge script script/Deploy.s.sol:Deploy --rpc-url base_sepolia --broadcast
+   ```
+5. Paste the printed `TokenizedFund` address into the README, replacing
+   "not yet deployed".
+6. Do one live `subscribe` against the deployed contract, so there is a real
+   transaction to point at in the video.
+
+### Then the video
+
+Two minutes. Suggested beats: what a tokenized money market fund is, why NAV
+rises instead of the balance, why a rising NAV has to be funded, and why the
+transfer agent needs `forceTransfer`.
+
+### Housekeeping
+
+All work sits on branch `claude/claude-code-blockchain-setup-x2gfc6`, not on
+`main`. Merge it when ready — "Squash and merge" collapses it into a single
+commit whose message is editable before confirming.
 
 Priority if time runs short: tests matter more than features. A smaller
 tested contract beats a larger untested one.
@@ -59,6 +100,8 @@ tested contract beats a larger untested one.
 
 - Management fee: include or leave out of scope? (Real funds charge 0.2-0.5%)
 - Redemption: instant, or add a queue to model real settlement delay?
+- Should `depositYield` be callable by anyone, or stay admin-only? Admin-only
+  today, which mirrors a manager settling T-bill proceeds.
 
 ## Glossary
 
