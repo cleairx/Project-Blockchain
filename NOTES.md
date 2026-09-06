@@ -50,19 +50,19 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [x] Core contract: ERC-20 shares, subscribe, redeem
 - [x] NAV accrual over time (simple interest from an annual rate)
 - [x] Yield funding via `depositYield`, plus `isFullyBacked` view
-- [x] Foundry tests for accrual — 13 passing
-- [ ] Whitelist / compliance layer
-- [ ] Admin controls: freeze, force-transfer
-- [ ] Foundry tests for the compliance layer
-- [ ] Deploy to Base Sepolia
-- [ ] README with architecture diagram
+- [x] Whitelist / compliance layer gated through the v5 `_update` hook
+- [x] Admin controls: freeze, force-transfer, COMPLIANCE_ROLE
+- [x] Foundry tests — 24 passing
+- [x] README with architecture diagram
+- [x] Deploy script and `.env.example`
+- [ ] Deploy to Base Sepolia, record the address in the README
 - [ ] Walkthrough video
 
 ## Next session
 
-1. Whitelist-gated transfers, then tests for it
-2. Freeze and force-transfer for the admin, then tests for it
-3. Deploy to Base Sepolia and record the contract address
+1. Deploy to Base Sepolia and paste the contract address into the README
+2. Do one live subscribe on the testnet, to have something to show
+3. Record the walkthrough video
 
 Priority if time runs short: tests matter more than features. A smaller
 tested contract beats a larger untested one.
