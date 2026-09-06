@@ -28,6 +28,16 @@ matching the share token to it keeps subscribe/redeem math free of scaling
 conversions. NAV per share is tracked separately as an 18-decimal fixed-point
 number, where 1e18 represents exactly $1.00.
 
+**Accrual is simple interest, not compound.** NAV grows linearly with elapsed
+time against a stored annual rate. Real money market funds accrue daily on a
+simple basis, so this matches them and the arithmetic can be checked by hand.
+
+**Rising NAV must be funded.** A NAV that rises on its own is only a promise —
+the contract would owe redeemers more than it holds, and late redeemers could
+not exit. `depositYield` is how the manager pays the interest in, mirroring
+T-bill coupon proceeds settling. `isFullyBacked` reports whether the promise is
+currently covered. There is a test for the failure case, not just the happy one.
+
 **Whitelist over full ERC-3643.** A single mapping checked on transfer captures
 the concept (transfer restriction on a security) without the weight of
 implementing the whole standard. Documented as a deliberate scope choice.
@@ -38,19 +48,21 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [x] Foundry + OpenZeppelin v5.7.0 installed, `forge build` passing
 - [x] Mock USDC (test asset)
 - [x] Core contract: ERC-20 shares, subscribe, redeem
-- [ ] NAV accrual over time
+- [x] NAV accrual over time (simple interest from an annual rate)
+- [x] Yield funding via `depositYield`, plus `isFullyBacked` view
+- [x] Foundry tests for accrual — 13 passing
 - [ ] Whitelist / compliance layer
 - [ ] Admin controls: freeze, force-transfer
-- [ ] Foundry tests (target 10-12)
+- [ ] Foundry tests for the compliance layer
 - [ ] Deploy to Base Sepolia
 - [ ] README with architecture diagram
 - [ ] Walkthrough video
 
-## Next session (3 hours)
+## Next session
 
-1. Install Claude Code, open this folder
-2. NAV accrual from elapsed time, then tests for it
-3. Whitelist-gated transfers + freeze, then tests for it
+1. Whitelist-gated transfers, then tests for it
+2. Freeze and force-transfer for the admin, then tests for it
+3. Deploy to Base Sepolia and record the contract address
 
 Priority if time runs short: tests matter more than features. A smaller
 tested contract beats a larger untested one.
@@ -59,6 +71,8 @@ tested contract beats a larger untested one.
 
 - Management fee: include or leave out of scope? (Real funds charge 0.2-0.5%)
 - Redemption: instant, or add a queue to model real settlement delay?
+- Should `depositYield` be callable by anyone, or stay admin-only? Admin-only
+  today, which mirrors a manager settling T-bill proceeds.
 
 ## Glossary
 
