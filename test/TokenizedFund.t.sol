@@ -341,6 +341,50 @@ contract TokenizedFundTest is Test {
         fund.forceTransfer(investor, outsider, 1e6);
     }
 
+    function test_ForceTransferCannotMintSharesOutOfNothing() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        uint256 supplyBefore = fund.totalSupply();
+
+        // address(0) is the mint sink in ERC-20. If the transfer agent could
+        // pass it as the sender, they would be issuing shares no one paid for.
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.InvalidHolder.selector, address(0))
+        );
+        fund.forceTransfer(address(0), investor2, 1_000_000e6);
+
+        assertEq(fund.totalSupply(), supplyBefore);
+    }
+
+    function test_ForceTransferCannotBurnShares() public {
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        uint256 supplyBefore = fund.totalSupply();
+
+        vm.prank(admin);
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenizedFund.InvalidHolder.selector, address(0))
+        );
+        fund.forceTransfer(investor, address(0), DEPOSIT);
+
+        assertEq(fund.totalSupply(), supplyBefore);
+    }
+
+    function test_SharesCanOnlyBeIssuedBySubscribing() public {
+        // Every share in existence must be backed by a subscription. After one
+        // deposit of 1,000 USDC at $1.00, supply is exactly 1,000 shares and
+        // the fund holds exactly 1,000 USDC.
+        vm.prank(investor);
+        fund.subscribe(DEPOSIT);
+
+        assertEq(fund.totalSupply(), DEPOSIT);
+        assertEq(fund.assetsHeld(), DEPOSIT);
+        assertTrue(fund.isFullyBacked());
+    }
+
     function test_OnlyComplianceRoleCanManageTheRegister() public {
         vm.prank(investor);
         vm.expectRevert();

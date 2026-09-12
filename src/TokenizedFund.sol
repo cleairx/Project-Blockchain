@@ -110,6 +110,7 @@ contract TokenizedFund is ERC20, AccessControl {
     error InsufficientLiquidity(uint256 requested, uint256 available);
     error NotWhitelisted(address account);
     error AccountFrozen(address account);
+    error InvalidHolder(address account);
 
     // -------------------------------------------------------------------
     // Constructor
@@ -290,6 +291,13 @@ contract TokenizedFund is ERC20, AccessControl {
         external
         onlyRole(COMPLIANCE_ROLE)
     {
+        // The zero address is not a holder, it is the mint and burn sink in
+        // ERC-20. Allowing it here would let the transfer agent issue shares
+        // out of nothing (`from == 0`) or destroy them (`to == 0`), neither of
+        // which is a transfer. Issuance belongs to `subscribe` alone.
+        if (from == address(0)) revert InvalidHolder(from);
+        if (to == address(0)) revert InvalidHolder(to);
+
         if (!isWhitelisted[to]) revert NotWhitelisted(to);
 
         // Deliberately calls the parent implementation, bypassing the gate in
