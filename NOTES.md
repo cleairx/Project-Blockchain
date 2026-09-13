@@ -56,8 +56,19 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [x] Fixed: `forceTransfer` could mint or burn via `address(0)`
 - [x] README with architecture diagram
 - [x] Deploy script and `.env.example`
-- [ ] Deploy to Base Sepolia, record the address in the README
+- [x] Deployed to Ethereum Sepolia, addresses recorded in the README
+- [ ] Verify the source on Etherscan so the code is readable there
+- [ ] One live subscribe on the testnet, to have a real transaction to show
 - [ ] Walkthrough video
+
+## Live deployment
+
+Ethereum Sepolia, block 11695166. Chose Ethereum over Base because BUIDL and
+FOBXX are Ethereum products, and Sepolia test ETH needs no new account.
+
+- `TokenizedFund` — `0xd1f36EE39eAAC22E42aE9365300D24f07c515C87`
+- `MockUSDC` — `0x941B691563DF3114368d41498d9e669e10ACCC8b`
+- Deployer / admin — `0x55F9828050742F8cf7dB965CB0c2C1177902861E`
 
 ## Next session
 

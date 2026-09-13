@@ -145,7 +145,15 @@ Test ETH for gas comes from the
 [Google Cloud Sepolia faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia).
 No test USDC is needed — `MockUSDC` mints its own.
 
-**Deployed address:** _not yet deployed_
+### Live on Ethereum Sepolia
+
+| Contract | Address |
+|---|---|
+| `TokenizedFund` | [`0xd1f36EE39eAAC22E42aE9365300D24f07c515C87`](https://sepolia.etherscan.io/address/0xd1f36EE39eAAC22E42aE9365300D24f07c515C87) |
+| `MockUSDC` | [`0x941B691563DF3114368d41498d9e669e10ACCC8b`](https://sepolia.etherscan.io/address/0x941B691563DF3114368d41498d9e669e10ACCC8b) |
+
+Deployed at block 11695166, opening at $1.00 per share with a 500 bps
+(5.00%) annual rate.
 
 ## Glossary
 
