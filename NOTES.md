@@ -52,7 +52,8 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [x] Yield funding via `depositYield`, plus `isFullyBacked` view
 - [x] Whitelist / compliance layer gated through the v5 `_update` hook
 - [x] Admin controls: freeze, force-transfer, COMPLIANCE_ROLE
-- [x] Foundry tests — 24 passing
+- [x] Foundry tests — 27 passing
+- [x] Fixed: `forceTransfer` could mint or burn via `address(0)`
 - [x] README with architecture diagram
 - [x] Deploy script and `.env.example`
 - [ ] Deploy to Base Sepolia, record the address in the README

@@ -102,7 +102,7 @@ A deliberate simplification, not an oversight.
 | `src/TokenizedFund.sol` | The fund: ERC-20 shares, NAV accrual, compliance |
 | `src/MockUSDC.sol` | Stand-in stablecoin for testing. 6 decimals, open faucet |
 | `script/Deploy.s.sol` | Deploys both and seeds the deployer |
-| `test/TokenizedFund.t.sol` | 24 tests |
+| `test/TokenizedFund.t.sol` | 27 tests |
 
 ### Decimals
 
