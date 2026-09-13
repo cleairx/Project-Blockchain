@@ -13,7 +13,10 @@ import {TokenizedFund} from "../src/TokenizedFund.sol";
 ///
 /// Usage:
 ///   forge script script/Deploy.s.sol:Deploy \
-///     --rpc-url base_sepolia --broadcast --verify
+///     --rpc-url sepolia --broadcast --verify
+///
+/// Network-agnostic: swap `sepolia` for `base_sepolia` to deploy to Base
+/// instead. Both endpoints are configured in foundry.toml.
 contract Deploy is Script {
     /// @dev 500 bps == 5.00% a year, roughly a short-dated T-bill yield.
     uint256 internal constant ANNUAL_RATE_BPS = 500;

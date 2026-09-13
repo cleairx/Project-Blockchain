@@ -125,19 +125,25 @@ forge build
 forge test -vv
 ```
 
-### Deploying to Base Sepolia
+### Deploying to a testnet
+
+Deploys to **Ethereum Sepolia** by default — BUIDL and FOBXX are Ethereum
+products, so it is the closer analogue. Swap `sepolia` for `base_sepolia` to
+target Base instead; the contracts are identical.
 
 ```bash
 cp .env.example .env    # then fill in your testnet private key
 source .env
 
 forge script script/Deploy.s.sol:Deploy \
-  --rpc-url base_sepolia \
+  --rpc-url sepolia \
   --broadcast \
   --verify
 ```
 
-Get testnet ETH from the [Base Sepolia faucet](https://docs.base.org/chain/network-faucets).
+Test ETH for gas comes from the
+[Google Cloud Sepolia faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia).
+No test USDC is needed — `MockUSDC` mints its own.
 
 **Deployed address:** _not yet deployed_
 
