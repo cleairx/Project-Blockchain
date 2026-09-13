@@ -107,7 +107,39 @@ connected wallet can subscribe and redeem against Sepolia.
 An address that is not on the holder register sees the compliance layer refuse
 it, which is the clearest demonstration of what this contract actually does.
 
-Static HTML, no build step. Serve it with GitHub Pages from `main` and `/docs`.
+Static HTML, no build step.
+
+## Post mortem
+
+Carry is presented on its own site the way any seed-stage company presents
+itself. This section is the honest version, and it belongs in the repository
+rather than on the product page.
+
+**The product was built before the customer was understood.** A US startup can
+already sweep idle cash into Treasuries at Mercury or Meow in about four clicks:
+no wallet, no gas, and no counterparty the founder has to justify to their
+board. Carry paid the same yield with none of that convenience, and asked for
+more trust in exchange.
+
+**The compliance layer made it worse rather than better.** Because fund shares
+are a security, holders have to be approved, and that approval is the whole
+business. It needs a transfer agent, a broker dealer relationship, and a
+regulator who already knows your name. This was software written for a problem
+whose real bottleneck was a licence.
+
+**What survives is the engineering.** The accrual is correct to the second, the
+register is enforced at the token level rather than by policy, and the contract
+refuses to issue a share that nobody paid for. The `forceTransfer` bug found
+before deployment is the clearest example: the transfer agent could have minted
+unbacked shares through `address(0)`, and closing that hole is what separates a
+demonstration from a toy.
+
+**What would change next time:** speak to eight founders about where their cash
+actually sits, before writing a line of Solidity.
+
+One note on scope: the 0.15% management fee quoted on the site is the stated
+business model, not something the contract charges. Fee accrual was left out
+deliberately, and is tracked as an open question below.
 
 ## Contracts
 
