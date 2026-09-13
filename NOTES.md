@@ -57,8 +57,8 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [x] README with architecture diagram
 - [x] Deploy script and `.env.example`
 - [x] Deployed to Ethereum Sepolia, addresses recorded in the README
+- [x] One live subscribe on the testnet — 1,000 mUSDC in, 999.998668 shares out
 - [ ] Verify the source on Etherscan so the code is readable there
-- [ ] One live subscribe on the testnet, to have a real transaction to show
 - [ ] Walkthrough video
 
 ## Live deployment

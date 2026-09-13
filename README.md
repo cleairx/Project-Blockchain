@@ -155,6 +155,22 @@ No test USDC is needed — `MockUSDC` mints its own.
 Deployed at block 11695166, opening at $1.00 per share with a 500 bps
 (5.00%) annual rate.
 
+#### Live accrual, observed on-chain
+
+A subscription of **1,000.000000 mUSDC**, made roughly 14 minutes after
+deployment, minted **999.998668 shares** — not 1,000.
+
+| | |
+|---|---|
+| Deposited | 1,000.000000 mUSDC |
+| Shares received | 999.998668 |
+| Implied NAV per share | $1.00000133 |
+
+The 0.001332 share shortfall is the yield that accrued between deployment and
+subscription: 5% a year, prorated over ~14 minutes, priced off the chain's own
+clock. Nothing was simulated and no admin pressed anything. The investor simply
+bought in at a price that had already moved.
+
 ## Glossary
 
 - **NAV** — Net Asset Value. Total fund value divided by shares outstanding.
