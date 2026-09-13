@@ -65,7 +65,7 @@ implementing the whole standard. Documented as a deliberate scope choice.
 
 ## The business framing
 
-Presented as **Float**, a treasury product for idle startup cash, and honestly
+Presented as **Carry**, a treasury product for idle startup cash, and honestly
 as a failed one. The post mortem on the site is the point: the product was built
 before the customer was understood, a Treasury sweep at Mercury already solved
 it in four clicks, and the compliance layer that made the shares legal is

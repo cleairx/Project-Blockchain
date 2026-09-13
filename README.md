@@ -97,7 +97,7 @@ A deliberate simplification, not an oversight.
 
 ## Website
 
-`docs/` holds a single-page site for **Float**, the treasury product this fund was
+`docs/` holds a single-page site for **Carry**, the treasury product this fund was
 built for. It is not a mockup: the hero reads `navPerShareCheckpoint`,
 `lastAccrualTime` and `annualRateBps` from the deployed contract and reproduces
 the accrual formula in the browser, so the share price ticks upward once a
