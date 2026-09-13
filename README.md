@@ -95,6 +95,20 @@ that OpenZeppelin v5 introduced in place of `_beforeTokenTransfer`.
 transfer restriction on a security — without the weight of the whole standard.
 A deliberate simplification, not an oversight.
 
+## Website
+
+`docs/` holds a single-page site for **Float**, the treasury product this fund was
+built for. It is not a mockup: the hero reads `navPerShareCheckpoint`,
+`lastAccrualTime` and `annualRateBps` from the deployed contract and reproduces
+the accrual formula in the browser, so the share price ticks upward once a
+second. The fund panel reads live AUM, backing status and supply, and a
+connected wallet can subscribe and redeem against Sepolia.
+
+An address that is not on the holder register sees the compliance layer refuse
+it, which is the clearest demonstration of what this contract actually does.
+
+Static HTML, no build step. Serve it with GitHub Pages from `main` and `/docs`.
+
 ## Contracts
 
 | File | Purpose |

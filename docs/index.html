@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Float | Treasury yield for idle startup cash</title>
+<meta name="description" content="A tokenized money market fund on Ethereum. Subscribe a stablecoin, hold shares that price up as Treasury bills accrue. Live on Sepolia." />
+<meta property="og:title" content="Float | Treasury yield for idle startup cash" />
+<meta property="og:description" content="A tokenized money market fund on Ethereum. Live on Sepolia testnet." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   FLOAT
+   Tokens. One accent (amber). One radius system. Auto theme.
+   Radius rule: cards 14px, panels 18px, inputs & buttons 10px.
+   ============================================================ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg:        #fbfbfa;
+  --bg-sunk:   #f2f2f0;
+  --surface:   #ffffff;
+  --surface-2: #f7f7f5;
+  --border:    #e2e1dd;
+  --border-strong: #cbc9c3;
+
+  --text:      #16171a;
+  --text-mid:  #55565b;
+  --text-dim:  #83848a;
+
+  --accent:      #a15c00;
+  --accent-bg:   #f59e0b;
+  --accent-on:   #1a1300;
+  --accent-soft: #fdf3e0;
+
+  --pos: #17663f;
+  --neg: #a32020;
+
+  --r-panel: 18px;
+  --r-card:  14px;
+  --r-ctl:   10px;
+
+  --sp-section: clamp(5rem, 9vw, 8.5rem);
+  --maxw: 1240px;
+
+  --ease: cubic-bezier(.16,1,.3,1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        #0d0f13;
+    --bg-sunk:   #08090c;
+    --surface:   #14171d;
+    --surface-2: #191d24;
+    --border:    #262b34;
+    --border-strong: #39404c;
+
+    --text:      #f4f5f7;
+    --text-mid:  #a6abb5;
+    --text-dim:  #767c88;
+
+    --accent:      #f5b342;
+    --accent-bg:   #f59e0b;
+    --accent-on:   #1a1300;
+    --accent-soft: #231a08;
+
+    --pos: #4ac68a;
+    --neg: #f0736b;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; }
+
+.wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 24px; }
+@media (max-width: 640px) { .wrap { padding-inline: 18px; } }
+
+.num { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; font-variant-numeric: tabular-nums; }
+
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.025em; line-height: 1.06; }
+p { margin: 0; }
+
+.eyebrow {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+
+.lede { color: var(--text-mid); font-size: clamp(1rem, 1.6vw, 1.15rem); max-width: 62ch; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  white-space: nowrap;
+  min-height: 46px; padding: 0 1.4rem;
+  border-radius: var(--r-ctl);
+  font: inherit; font-size: .95rem; font-weight: 500;
+  text-decoration: none; cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color .22s var(--ease), border-color .22s var(--ease), transform .12s var(--ease), color .22s var(--ease);
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: 2px solid var(--accent-bg); outline-offset: 3px; }
+
+.btn-primary { background: var(--accent-bg); color: var(--accent-on); font-weight: 600; }
+.btn-primary:hover { background: #ffb02e; }
+.btn-primary:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
+
+.btn-ghost { border-color: var(--border-strong); color: var(--text); background: transparent; }
+.btn-ghost:hover { background: var(--surface-2); border-color: var(--text-dim); }
+
+.btn-sm { min-height: 40px; font-size: .875rem; padding: 0 1rem; }
+
+/* ---------- Nav ---------- */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  height: 68px;
+  display: flex; align-items: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+.brand { display: flex; align-items: center; gap: .6rem; font-weight: 600; font-size: 1.06rem; letter-spacing: -0.02em; text-decoration: none; }
+.brand-mark { width: 22px; height: 22px; flex: none; }
+.nav-links { display: flex; align-items: center; gap: 1.9rem; }
+.nav-links a { font-size: .9rem; color: var(--text-mid); text-decoration: none; transition: color .2s var(--ease); }
+.nav-links a:hover { color: var(--text); }
+@media (max-width: 860px) { .nav-links { display: none; } }
+
+/* ---------- Hero: asymmetric split ---------- */
+.hero { padding-top: clamp(3.5rem, 6vw, 5.5rem); padding-bottom: var(--sp-section); }
+.hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(2.5rem, 5vw, 5rem); align-items: center; }
+@media (max-width: 980px) { .hero-grid { grid-template-columns: 1fr; gap: 3rem; } }
+
+.hero h1 { font-size: clamp(2.6rem, 6vw, 4.1rem); }
+.hero .lede { margin-top: 1.5rem; font-size: clamp(1.05rem, 1.9vw, 1.24rem); max-width: 34ch; }
+.hero-cta { display: flex; gap: .8rem; margin-top: 2.4rem; flex-wrap: wrap; }
+
+/* Live NAV panel (real contract data, polled + interpolated) */
+.navpanel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  padding: clamp(1.5rem, 3vw, 2.2rem);
+  box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--text) 28%, transparent);
+}
+.navpanel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; }
+.navpanel-label { font-size: .8rem; color: var(--text-dim); letter-spacing: .01em; }
+.live { display: inline-flex; align-items: center; gap: .45rem; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--pos); font-family: 'JetBrains Mono', monospace; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); }
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot { animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+}
+
+.nav-figure { font-size: clamp(2.1rem, 4.6vw, 2.9rem); font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+.nav-figure .tail { color: var(--accent); }
+.nav-sub { margin-top: .7rem; font-size: .85rem; color: var(--text-mid); }
+
+.navpanel-rows { margin-top: 1.8rem; display: grid; gap: .1rem; }
+.nrow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--border); font-size: .9rem; }
+.nrow span:first-child { color: var(--text-mid); }
+.nrow span:last-child { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+.skl { display: inline-block; height: 1em; width: 5.5em; border-radius: 4px; background: var(--surface-2); vertical-align: middle; }
+@media (prefers-reduced-motion: no-preference) {
+  .skl { background: linear-gradient(90deg, var(--surface-2) 25%, var(--bg-sunk) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+}
+
+/* ---------- Built-on strip ---------- */
+.builton { padding-block: 2.6rem; border-block: 1px solid var(--border); background: var(--bg-sunk); }
+.builton .wrap { display: flex; align-items: center; gap: clamp(1.6rem, 5vw, 3.6rem); flex-wrap: wrap; justify-content: center; }
+.builton p { font-size: .82rem; color: var(--text-dim); margin-right: .5rem; }
+.builton img { height: 22px; width: auto; opacity: .62; transition: opacity .22s var(--ease); }
+.builton a:hover img { opacity: 1; }
+
+/* ---------- Section scaffolding ---------- */
+section { scroll-margin-top: 84px; }
+.sec { padding-block: var(--sp-section); }
+.sec-head { max-width: 34ch; margin-bottom: clamp(2.5rem, 5vw, 4rem); }
+.sec-head h2 { font-size: clamp(2rem, 4vw, 2.9rem); }
+.sec-head .lede { margin-top: 1.1rem; }
+
+/* ---------- Problem: asymmetric statement ---------- */
+.problem { background: var(--bg-sunk); border-block: 1px solid var(--border); }
+.problem-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: clamp(2.5rem, 6vw, 5rem); align-items: end; }
+@media (max-width: 900px) { .problem-grid { grid-template-columns: 1fr; align-items: start; } }
+.problem h2 { font-size: clamp(2rem, 4.4vw, 3.1rem); max-width: 16ch; }
+.problem .lede { margin-top: 1.5rem; }
+
+.compare { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; }
+.crow { background: var(--surface); padding: 1.5rem 1.6rem; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.crow-label { font-size: .92rem; color: var(--text-mid); }
+.crow-val { font-family: 'JetBrains Mono', monospace; font-size: 1.75rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.crow.is-lead .crow-val { color: var(--accent); }
+.compare-note { margin-top: .9rem; font-size: .78rem; color: var(--text-dim); }
+
+.problem-media { margin-top: clamp(3rem, 6vw, 4.5rem); border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 21 / 7; }
+.problem-media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); }
+
+/* ---------- How it works: asymmetric bento, exactly 3 cells ---------- */
+.bento { display: grid; grid-template-columns: 1.25fr 1fr; grid-template-rows: auto auto; gap: 14px; }
+.bcell { border: 1px solid var(--border); border-radius: var(--r-card); padding: clamp(1.5rem, 2.6vw, 2.1rem); background: var(--surface); display: flex; flex-direction: column; }
+.bcell-a { grid-row: span 2; background: var(--surface); position: relative; overflow: hidden; padding: 0; }
+.bcell-a .bmedia { height: 100%; min-height: 260px; }
+.bcell-a .bmedia img { width: 100%; height: 100%; object-fit: cover; }
+.bcell-a .bbody { padding: clamp(1.5rem, 2.6vw, 2.1rem); }
+.bcell-b { background: linear-gradient(150deg, var(--accent-soft), var(--surface) 70%); }
+.bcell h3 { font-size: 1.22rem; margin-bottom: .6rem; }
+.bcell p { font-size: .93rem; color: var(--text-mid); }
+.bstep { font-family: 'JetBrains Mono', monospace; font-size: .74rem; color: var(--accent); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1.1rem; }
+@media (max-width: 860px) {
+  .bento { grid-template-columns: 1fr; }
+  .bcell-a { grid-row: auto; }
+  .bcell-a .bmedia { min-height: 200px; }
+}
+
+/* ---------- Live fund app panel ---------- */
+.fund { background: var(--bg-sunk); border-block: 1px solid var(--border); }
+.fund-grid { display: grid; grid-template-columns: 1fr 420px; gap: clamp(2rem, 4vw, 3.5rem); align-items: start; }
+@media (max-width: 1040px) { .fund-grid { grid-template-columns: 1fr; } }
+
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; }
+@media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
+.stat { background: var(--surface); padding: 1.4rem 1.5rem; }
+.stat-k { font-size: .8rem; color: var(--text-mid); margin-bottom: .5rem; }
+.stat-v { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+.terminal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-panel);
+  padding: clamp(1.4rem, 2.6vw, 1.9rem);
+  position: sticky; top: 92px;
+}
+@media (max-width: 1040px) { .terminal { position: static; } }
+.terminal h3 { font-size: 1.05rem; margin-bottom: .3rem; }
+.terminal-sub { font-size: .85rem; color: var(--text-mid); margin-bottom: 1.5rem; }
+
+.field { margin-bottom: 1rem; }
+.field label { display: block; font-size: .84rem; font-weight: 500; margin-bottom: .45rem; color: var(--text); }
+.field input {
+  width: 100%; min-height: 46px; padding: 0 .9rem;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border-strong); border-radius: var(--r-ctl);
+  font-family: 'JetBrains Mono', monospace; font-size: .95rem;
+}
+.field input::placeholder { color: var(--text-dim); }
+.field input:focus { outline: 2px solid var(--accent-bg); outline-offset: 1px; border-color: transparent; }
+.field .help { font-size: .78rem; color: var(--text-mid); margin-top: .4rem; }
+
+.state {
+  border: 1px solid var(--border); border-radius: var(--r-ctl);
+  padding: 1rem 1.1rem; font-size: .86rem; color: var(--text-mid);
+  background: var(--surface-2);
+}
+.state strong { color: var(--text); font-weight: 600; display: block; margin-bottom: .3rem; }
+.state.is-warn { border-color: color-mix(in srgb, var(--accent-bg) 45%, var(--border)); background: var(--accent-soft); }
+.state.is-err { border-color: color-mix(in srgb, var(--neg) 40%, var(--border)); }
+.state.is-err strong { color: var(--neg); }
+
+.holding { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-ctl); overflow: hidden; margin-bottom: 1.2rem; }
+.hrow { background: var(--surface-2); padding: .75rem 1rem; display: flex; justify-content: space-between; gap: 1rem; font-size: .86rem; }
+.hrow span:last-child { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
+.tx-note { margin-top: 1rem; font-size: .8rem; color: var(--text-mid); word-break: break-all; }
+.tx-note a { color: var(--accent); }
+
+/* ---------- Compliance: image + text split ---------- */
+.comp-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(2.5rem, 5vw, 4.5rem); align-items: center; }
+@media (max-width: 900px) { .comp-grid { grid-template-columns: 1fr; } }
+.comp-media { border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4 / 5; }
+.comp-media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.04); }
+.comp-list { margin: 2rem 0 0; padding: 0; list-style: none; display: grid; gap: 1.6rem; }
+.comp-list h3 { font-size: 1.02rem; margin-bottom: .4rem; }
+.comp-list p { font-size: .93rem; color: var(--text-mid); }
+
+/* ---------- Post mortem: editorial ---------- */
+.post { background: var(--surface-2); border-block: 1px solid var(--border); }
+.post .wrap { max-width: 780px; }
+.post h2 { font-size: clamp(2rem, 4.2vw, 2.9rem); margin-bottom: 2.2rem; }
+.post p { font-size: clamp(1.04rem, 1.7vw, 1.18rem); color: var(--text-mid); margin-bottom: 1.5rem; line-height: 1.72; }
+.post p strong { color: var(--text); font-weight: 600; }
+.post .kicker { border-left: 3px solid var(--accent-bg); padding-left: 1.5rem; color: var(--text); font-weight: 500; font-size: clamp(1.15rem, 2.2vw, 1.4rem); line-height: 1.5; }
+
+/* ---------- Footer ---------- */
+.foot { border-top: 1px solid var(--border); padding-block: 3.5rem 3rem; background: var(--bg); }
+.foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2.5rem; }
+@media (max-width: 760px) { .foot-grid { grid-template-columns: 1fr; gap: 2rem; } }
+.foot h4 { font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-dim); margin: 0 0 1rem; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.foot a { font-size: .9rem; color: var(--text-mid); text-decoration: none; }
+.foot a:hover { color: var(--text); }
+.foot-note { margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--border); font-size: .82rem; color: var(--text-dim); max-width: 70ch; }
+.addr { font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: var(--text-mid); word-break: break-all; }
+
+/* ---------- Scroll reveal ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .rv { opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .rv.in { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="21" height="21" rx="6" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M7 15.5c3.2 0 3.2-7 6.4-7 1.6 0 2.4 1.75 3.2 3.5" stroke="#f59e0b" stroke-width="1.9" stroke-linecap="round"/>
+      </svg>
+      Float
+    </a>
+    <nav class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#fund">Live fund</a>
+      <a href="#compliance">Compliance</a>
+      <a href="#post-mortem">Post mortem</a>
+    </nav>
+    <a class="btn btn-ghost btn-sm" href="https://github.com/cleairx/Project-Blockchain">Source</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>Your runway<br>should earn.</h1>
+      <p class="lede">Idle company cash, held in tokenized Treasury bills. Redeem any day. Yield accrues by the second.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#fund">Open the fund</a>
+        <a class="btn btn-ghost" href="https://sepolia.etherscan.io/address/0xd1f36EE39eAAC22E42aE9365300D24f07c515C87">Read the contract</a>
+      </div>
+    </div>
+
+    <div class="navpanel">
+      <div class="navpanel-head">
+        <div class="navpanel-label">Net asset value per share</div>
+        <div class="live"><span class="live-dot"></span>Live</div>
+      </div>
+      <div class="nav-figure num" id="navBig"><span class="skl" style="width:8em"></span></div>
+      <p class="nav-sub" id="navSub">Reading from Ethereum Sepolia</p>
+
+      <div class="navpanel-rows">
+        <div class="nrow"><span>Annual rate</span><span id="sRate"><span class="skl" style="width:3.5em"></span></span></div>
+        <div class="nrow"><span>Assets under management</span><span id="sAum"><span class="skl" style="width:6em"></span></span></div>
+        <div class="nrow"><span>Shares outstanding</span><span id="sSupply"><span class="skl" style="width:6em"></span></span></div>
+        <div class="nrow"><span>Fully backed</span><span id="sBacked"><span class="skl" style="width:3em"></span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== BUILT ON ========== -->
+<div class="builton">
+  <div class="wrap">
+    <p>Built on</p>
+    <a href="https://ethereum.org" aria-label="Ethereum"><img src="https://cdn.simpleicons.org/ethereum/9a9a9a" alt="Ethereum" width="22" height="22" loading="lazy" /></a>
+    <a href="https://soliditylang.org" aria-label="Solidity"><img src="https://cdn.simpleicons.org/solidity/9a9a9a" alt="Solidity" width="22" height="22" loading="lazy" /></a>
+    <a href="https://www.openzeppelin.com" aria-label="OpenZeppelin"><img src="https://cdn.simpleicons.org/openzeppelin/9a9a9a" alt="OpenZeppelin" width="22" height="22" loading="lazy" /></a>
+    <a href="https://github.com/cleairx/Project-Blockchain" aria-label="GitHub"><img src="https://cdn.simpleicons.org/github/9a9a9a" alt="GitHub" width="22" height="22" loading="lazy" /></a>
+  </div>
+</div>
+
+<!-- ========== PROBLEM ========== -->
+<section class="sec problem">
+  <div class="wrap">
+    <div class="problem-grid rv">
+      <div>
+        <h2>Cash sitting still is cash losing money.</h2>
+        <p class="lede">A company holding eighteen months of runway in a business checking account is lending it to a bank for nothing. The same money in three month Treasury bills earns the policy rate. Float is the second option, settled on a public ledger.</p>
+      </div>
+      <div>
+        <div class="compare">
+          <div class="crow">
+            <span class="crow-label">Business checking</span>
+            <span class="crow-val num">0.01%</span>
+          </div>
+          <div class="crow is-lead">
+            <span class="crow-label">Three month Treasury</span>
+            <span class="crow-val num">5.00%</span>
+          </div>
+        </div>
+        <p class="compare-note">Illustrative rates. The deployed contract is configured at 500 basis points.</p>
+      </div>
+    </div>
+    <div class="problem-media rv">
+      <img src="https://picsum.photos/seed/float-treasury-ledger-desk/1600/540" alt="A desk with printed financial statements" width="1600" height="540" loading="lazy" />
+    </div>
+  </div>
+</section>
+
+<!-- ========== HOW IT WORKS ========== -->
+<section class="sec" id="how">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Three functions. No moving parts.</h2>
+      <p class="lede">The share count you hold never changes. The price of each share does.</p>
+    </div>
+
+    <div class="bento rv">
+      <article class="bcell bcell-a">
+        <div class="bmedia">
+          <img src="https://picsum.photos/seed/float-settlement-morning/800/900" alt="Morning light across an office floor" width="800" height="900" loading="lazy" />
+        </div>
+        <div class="bbody">
+          <div class="bstep">Subscribe</div>
+          <h3>Stablecoin in, shares out</h3>
+          <p>Deposit is priced at the net asset value at that exact block. Subscribe an hour later and you receive fewer shares for the same money, because the price has already moved.</p>
+        </div>
+      </article>
+
+      <article class="bcell bcell-b">
+        <div class="bstep">Accrue</div>
+        <h3>The clock sets the price</h3>
+        <p>No administrator strikes a daily NAV. The contract derives it from elapsed seconds and a stored annual rate, so the value of a share is correct at every block between now and forever.</p>
+      </article>
+
+      <article class="bcell">
+        <div class="bstep">Redeem</div>
+        <h3>Out on any block</h3>
+        <p>Burn shares, receive stablecoin at the current price. There is no notice period and no queue, because there is nothing to liquidate.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ========== LIVE FUND ========== -->
+<section class="sec fund" id="fund">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Live on Sepolia</p>
+      <h2>The fund, running right now.</h2>
+      <p class="lede">Every number below is read from the deployed contract. Connect a wallet to subscribe against it.</p>
+    </div>
+
+    <div class="fund-grid">
+      <div class="rv">
+        <div class="stats">
+          <div class="stat"><div class="stat-k">NAV per share</div><div class="stat-v" id="fNav"><span class="skl"></span></div></div>
+          <div class="stat"><div class="stat-k">Annual rate</div><div class="stat-v" id="fRate"><span class="skl" style="width:3.5em"></span></div></div>
+          <div class="stat"><div class="stat-k">Assets under management</div><div class="stat-v" id="fAum"><span class="skl"></span></div></div>
+          <div class="stat"><div class="stat-k">Stablecoin held</div><div class="stat-v" id="fHeld"><span class="skl"></span></div></div>
+          <div class="stat"><div class="stat-k">Shares outstanding</div><div class="stat-v" id="fSupply"><span class="skl"></span></div></div>
+          <div class="stat"><div class="stat-k">Backing status</div><div class="stat-v" id="fBacked"><span class="skl" style="width:4em"></span></div></div>
+        </div>
+
+        <div style="margin-top:1.6rem" class="addr">
+          Fund <a href="https://sepolia.etherscan.io/address/0xd1f36EE39eAAC22E42aE9365300D24f07c515C87">0xd1f36EE39eAAC22E42aE9365300D24f07c515C87</a><br>
+          Test stablecoin <a href="https://sepolia.etherscan.io/address/0x941B691563DF3114368d41498d9e669e10ACCC8b">0x941B691563DF3114368d41498d9e669e10ACCC8b</a>
+        </div>
+      </div>
+
+      <div class="terminal rv">
+        <h3>Subscribe</h3>
+        <p class="terminal-sub">Sepolia testnet. No real money moves.</p>
+
+        <div id="panelDisconnected">
+          <div class="state" style="margin-bottom:1.2rem">
+            <strong>No wallet connected</strong>
+            The fund is readable by anyone. Subscribing needs a wallet on Sepolia.
+          </div>
+          <button class="btn btn-primary" style="width:100%" id="btnConnect">Connect wallet</button>
+        </div>
+
+        <div id="panelConnected" hidden>
+          <div class="holding">
+            <div class="hrow"><span>Your shares</span><span id="uShares">0.000000</span></div>
+            <div class="hrow"><span>Current value</span><span id="uValue">0.00</span></div>
+            <div class="hrow"><span>Test stablecoin</span><span id="uUsdc">0.00</span></div>
+          </div>
+
+          <div id="notWhitelisted" hidden>
+            <div class="state is-warn" style="margin-bottom:1rem">
+              <strong>Not on the holder register</strong>
+              Fund shares are a security, so only approved addresses can hold them. Your address is not approved, and the contract will reject a subscription. This is the compliance layer working, not an error.
+            </div>
+            <button class="btn btn-ghost btn-sm" style="width:100%" id="btnFaucet">Mint test stablecoin anyway</button>
+          </div>
+
+          <div id="tradePanel" hidden>
+            <div class="field">
+              <label for="amt">Amount</label>
+              <input id="amt" type="text" inputmode="decimal" value="100" placeholder="100" />
+              <p class="help">Denominated in test stablecoin, six decimals.</p>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" id="btnSubscribe">Subscribe</button>
+              <button class="btn btn-ghost" id="btnRedeem">Redeem</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:.65rem" id="btnFaucet2">Mint test stablecoin</button>
+          </div>
+
+          <div class="tx-note" id="txNote" hidden></div>
+        </div>
+
+        <div class="state is-err" id="rpcError" hidden style="margin-top:1.2rem">
+          <strong>Could not reach the network</strong>
+          The public Sepolia endpoint did not respond. Refresh in a moment.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== COMPLIANCE ========== -->
+<section class="sec" id="compliance">
+  <div class="wrap comp-grid rv">
+    <div class="comp-media">
+      <img src="https://picsum.photos/seed/float-register-archive-room/900/1125" alt="Rows of archived record binders" width="900" height="1125" loading="lazy" />
+    </div>
+    <div>
+      <h2 style="font-size:clamp(1.9rem,3.8vw,2.7rem)">A share register, enforced by the token itself.</h2>
+      <p class="lede" style="margin-top:1.2rem">Fund shares are a security. Somebody has to decide who may hold them, and be able to act when a court says so. In Float that somebody is a role on the contract.</p>
+
+      <ul class="comp-list">
+        <li>
+          <h3>Approved holders only</h3>
+          <p>Every mint and every transfer passes through one gate. An address that is not on the register cannot receive shares from anyone, including the fund.</p>
+        </li>
+        <li>
+          <h3>Freeze without removal</h3>
+          <p>A disputed or sanctioned account keeps its place on the register but cannot send, receive, or redeem until it is released.</p>
+        </li>
+        <li>
+          <h3>Forced transfer</h3>
+          <p>Lost keys, inheritance, a court order. The agent can move shares without the holder signing, but never onto an unapproved address, and never into existence.</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ========== POST MORTEM ========== -->
+<section class="sec post" id="post-mortem">
+  <div class="wrap">
+    <h2>Why Float is not a business.</h2>
+    <p class="kicker">I built the product before I understood the customer.</p>
+    <p>A US startup can already sweep idle cash into Treasuries at Mercury or Meow in about four clicks. No wallet, no gas, no counterparty the founder has to justify to their board. Float paid the same yield with none of that convenience, and asked for more trust.</p>
+    <p>The compliance layer made it worse rather than better. Because fund shares are a security, holders have to be approved, and that approval is the whole business. It needs a transfer agent, a broker dealer relationship, and a regulator who already knows your name. <strong>I had written software for a problem whose real bottleneck was a licence.</strong></p>
+    <p>What survives is the engineering. The accrual is correct to the second, the register is enforced at the token level, and the contract refuses to issue a share that nobody paid for. Those were worth building, and they are what I would carry into the next attempt.</p>
+    <p>What I would do differently: speak to eight founders about where their cash actually sits, before writing a line of Solidity.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ========== FOOTER ========== -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="#top" style="margin-bottom:.8rem">
+          <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <rect x="1.5" y="1.5" width="21" height="21" rx="6" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M7 15.5c3.2 0 3.2-7 6.4-7 1.6 0 2.4 1.75 3.2 3.5" stroke="#f59e0b" stroke-width="1.9" stroke-linecap="round"/>
+          </svg>
+          Float
+        </a>
+        <p style="font-size:.88rem;color:var(--text-mid);max-width:34ch">A tokenized money market fund, built as a study of how BUIDL and FOBXX actually work.</p>
+      </div>
+      <div>
+        <h4>Contract</h4>
+        <ul>
+          <li><a href="https://sepolia.etherscan.io/address/0xd1f36EE39eAAC22E42aE9365300D24f07c515C87">Fund on Etherscan</a></li>
+          <li><a href="https://sepolia.etherscan.io/address/0x941B691563DF3114368d41498d9e669e10ACCC8b">Test stablecoin</a></li>
+          <li><a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia">Sepolia faucet</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <ul>
+          <li><a href="https://github.com/cleairx/Project-Blockchain">Repository</a></li>
+          <li><a href="https://github.com/cleairx/Project-Blockchain/blob/main/src/TokenizedFund.sol">TokenizedFund.sol</a></li>
+          <li><a href="https://github.com/cleairx/Project-Blockchain/blob/main/test/TokenizedFund.t.sol">Test suite</a></li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot-note">
+      Ethereum Sepolia testnet only. The stablecoin is a mock with an open faucet and no value. This is a portfolio project, not an offer of securities, not investment advice, and not a real fund.
+    </p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var FUND = "0xd1f36EE39eAAC22E42aE9365300D24f07c515C87";
+  var USDC = "0x941B691563DF3114368d41498d9e669e10ACCC8b";
+  var RPC  = "https://ethereum-sepolia-rpc.publicnode.com";
+  var CHAIN_HEX = "0xaa36a7"; // 11155111
+
+  var FUND_ABI = [
+    "function navPerShareCheckpoint() view returns (uint256)",
+    "function lastAccrualTime() view returns (uint256)",
+    "function annualRateBps() view returns (uint256)",
+    "function currentNavPerShare() view returns (uint256)",
+    "function totalSupply() view returns (uint256)",
+    "function totalAssetsUnderManagement() view returns (uint256)",
+    "function assetsHeld() view returns (uint256)",
+    "function isFullyBacked() view returns (bool)",
+    "function balanceOf(address) view returns (uint256)",
+    "function balanceInAssets(address) view returns (uint256)",
+    "function isWhitelisted(address) view returns (bool)",
+    "function subscribe(uint256) returns (uint256)",
+    "function redeem(uint256) returns (uint256)"
+  ];
+  var USDC_ABI = [
+    "function balanceOf(address) view returns (uint256)",
+    "function allowance(address,address) view returns (uint256)",
+    "function approve(address,uint256) returns (bool)",
+    "function mint(address,uint256)"
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---- formatting -------------------------------------------------
+  function navText(nav, places) {
+    // nav is 18-decimal fixed point. 1e18 == $1.00
+    var whole = nav / 1000000000000000000n;
+    var frac = (nav % 1000000000000000000n).toString().padStart(18, "0").slice(0, places);
+    return whole.toString() + "." + frac;
+  }
+  function money6(v, places) {
+    var whole = v / 1000000n;
+    var frac = (v % 1000000n).toString().padStart(6, "0").slice(0, places);
+    var s = whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return places > 0 ? s + "." + frac : s;
+  }
+
+  // ---- live NAV ---------------------------------------------------
+  var checkpoint = null, lastAccrual = null, rateBps = null;
+  var SECONDS_PER_YEAR = 31536000n, BPS = 10000n;
+
+  function navNow() {
+    if (checkpoint === null) return null;
+    var now = BigInt(Math.floor(Date.now() / 1000));
+    var elapsed = now > lastAccrual ? now - lastAccrual : 0n;
+    if (elapsed === 0n || rateBps === 0n) return checkpoint;
+    return checkpoint + (checkpoint * rateBps * elapsed) / (BPS * SECONDS_PER_YEAR);
+  }
+
+  function paintNav() {
+    var nav = navNow();
+    if (nav === null) return;
+    var full = navText(nav, 10);
+    var head = full.slice(0, full.indexOf(".") + 5);
+    var tail = full.slice(full.indexOf(".") + 5);
+    var big = $("navBig");
+    if (big) big.innerHTML = "$" + head + '<span class="tail">' + tail + "</span>";
+    var small = $("fNav");
+    if (small) small.textContent = "$" + navText(nav, 8);
+  }
+
+  // ---- read-only load ---------------------------------------------
+  var reader = new ethers.JsonRpcProvider(RPC, 11155111, { staticNetwork: true });
+  var fundRO = new ethers.Contract(FUND, FUND_ABI, reader);
+
+  function load() {
+    Promise.all([
+      fundRO.navPerShareCheckpoint(),
+      fundRO.lastAccrualTime(),
+      fundRO.annualRateBps(),
+      fundRO.totalSupply(),
+      fundRO.totalAssetsUnderManagement(),
+      fundRO.assetsHeld(),
+      fundRO.isFullyBacked()
+    ]).then(function (r) {
+      checkpoint = r[0]; lastAccrual = r[1]; rateBps = r[2];
+      var supply = r[3], aum = r[4], held = r[5], backed = r[6];
+
+      var rate = (Number(rateBps) / 100).toFixed(2) + "%";
+      var backedText = backed ? "Fully backed" : "Yield outstanding";
+
+      $("sRate").textContent = rate;
+      $("sAum").textContent = money6(aum, 2);
+      $("sSupply").textContent = money6(supply, 2);
+      $("sBacked").textContent = backed ? "Yes" : "No";
+      $("sBacked").style.color = backed ? "var(--pos)" : "var(--accent)";
+
+      $("fRate").textContent = rate;
+      $("fAum").textContent = money6(aum, 2);
+      $("fHeld").textContent = money6(held, 2);
+      $("fSupply").textContent = money6(supply, 2);
+      $("fBacked").textContent = backedText;
+      $("fBacked").style.color = backed ? "var(--pos)" : "var(--accent)";
+
+      $("navSub").textContent = "Priced from the chain clock at " + rate + " a year";
+      $("rpcError").hidden = true;
+      paintNav();
+    }).catch(function (e) {
+      console.error(e);
+      $("rpcError").hidden = false;
+      $("navSub").textContent = "Network unavailable";
+    });
+  }
+
+  load();
+  setInterval(load, 30000);
+  setInterval(paintNav, 500);
+
+  // ---- wallet -----------------------------------------------------
+  var signer = null, account = null, fundRW = null, usdcRW = null;
+
+  function note(html) {
+    var el = $("txNote");
+    el.hidden = false;
+    el.innerHTML = html;
+  }
+
+  function short(a) { return a.slice(0, 6) + "..." + a.slice(-4); }
+
+  function refreshUser() {
+    if (!account) return;
+    var usdcRO = new ethers.Contract(USDC, USDC_ABI, reader);
+    Promise.all([
+      fundRO.balanceOf(account),
+      fundRO.balanceInAssets(account),
+      usdcRO.balanceOf(account),
+      fundRO.isWhitelisted(account)
+    ]).then(function (r) {
+      $("uShares").textContent = money6(r[0], 6);
+      $("uValue").textContent = money6(r[1], 2);
+      $("uUsdc").textContent = money6(r[2], 2);
+      var ok = r[3];
+      $("notWhitelisted").hidden = ok;
+      $("tradePanel").hidden = !ok;
+    }).catch(function (e) { console.error(e); });
+  }
+
+  $("btnConnect").addEventListener("click", function () {
+    if (!window.ethereum) {
+      note("No browser wallet found. Install MetaMask to subscribe. Every figure above is still live without one.");
+      return;
+    }
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = "Connecting";
+    var bp = new ethers.BrowserProvider(window.ethereum);
+    bp.send("eth_requestAccounts", [])
+      .then(function () { return window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] }).catch(function () {}); })
+      .then(function () { return bp.getSigner(); })
+      .then(function (s) {
+        signer = s; account = s.address;
+        fundRW = new ethers.Contract(FUND, FUND_ABI, s);
+        usdcRW = new ethers.Contract(USDC, USDC_ABI, s);
+        $("panelDisconnected").hidden = true;
+        $("panelConnected").hidden = false;
+        note("Connected as " + short(account));
+        refreshUser();
+      })
+      .catch(function (e) {
+        btn.disabled = false; btn.textContent = "Connect wallet";
+        note("Connection cancelled.");
+        console.error(e);
+      });
+  });
+
+  function parseAmt() {
+    var raw = ($("amt") ? $("amt").value : "0").trim();
+    if (!/^\d+(\.\d{0,6})?$/.test(raw) || Number(raw) <= 0) return null;
+    return ethers.parseUnits(raw, 6);
+  }
+
+  function run(btn, label, work) {
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = label;
+    work().then(function (tx) {
+      note("Sent. <a href='https://sepolia.etherscan.io/tx/" + tx.hash + "'>" + short(tx.hash) + "</a> Waiting for confirmation.");
+      return tx.wait();
+    }).then(function (rc) {
+      note("Confirmed in block " + rc.blockNumber + ".");
+      refreshUser(); load();
+    }).catch(function (e) {
+      note("Rejected: " + (e.shortMessage || e.reason || e.message || "unknown error"));
+      console.error(e);
+    }).finally(function () {
+      btn.disabled = false; btn.textContent = old;
+    });
+  }
+
+  function faucet() {
+    run(this, "Minting", function () { return usdcRW.mint(account, ethers.parseUnits("10000", 6)); });
+  }
+  $("btnFaucet").addEventListener("click", faucet);
+  $("btnFaucet2").addEventListener("click", faucet);
+
+  $("btnSubscribe").addEventListener("click", function () {
+    var amt = parseAmt();
+    if (amt === null) { note("Enter a positive amount with at most six decimal places."); return; }
+    var btn = this;
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = "Checking";
+    var usdcRO = new ethers.Contract(USDC, USDC_ABI, reader);
+    usdcRO.allowance(account, FUND).then(function (allow) {
+      if (allow >= amt) return null;
+      btn.textContent = "Approving";
+      note("Approving the fund to move your stablecoin.");
+      return usdcRW.approve(FUND, amt).then(function (tx) { return tx.wait(); });
+    }).then(function () {
+      btn.textContent = "Subscribing";
+      return fundRW.subscribe(amt);
+    }).then(function (tx) {
+      note("Sent. <a href='https://sepolia.etherscan.io/tx/" + tx.hash + "'>" + short(tx.hash) + "</a> Waiting for confirmation.");
+      return tx.wait();
+    }).then(function (rc) {
+      note("Subscribed in block " + rc.blockNumber + ".");
+      refreshUser(); load();
+    }).catch(function (e) {
+      note("Rejected: " + (e.shortMessage || e.reason || e.message || "unknown error"));
+      console.error(e);
+    }).finally(function () {
+      btn.disabled = false; btn.textContent = old;
+    });
+  });
+
+  $("btnRedeem").addEventListener("click", function () {
+    var amt = parseAmt();
+    if (amt === null) { note("Enter a positive amount with at most six decimal places."); return; }
+    run(this, "Redeeming", function () { return fundRW.redeem(amt); });
+  });
+
+  // ---- scroll reveal ----------------------------------------------
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); });
+  } else {
+    document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
+  }
+})();
+</script>
+</body>
+</html>

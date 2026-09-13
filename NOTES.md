@@ -58,8 +58,19 @@ implementing the whole standard. Documented as a deliberate scope choice.
 - [x] Deploy script and `.env.example`
 - [x] Deployed to Ethereum Sepolia, addresses recorded in the README
 - [x] One live subscribe on the testnet — 1,000 mUSDC in, 999.998668 shares out
+- [x] Website in `docs/`, reading the live contract
+- [ ] Turn on GitHub Pages: Settings, Pages, source = main branch `/docs`
 - [ ] Verify the source on Etherscan so the code is readable there
 - [ ] Walkthrough video
+
+## The business framing
+
+Presented as **Float**, a treasury product for idle startup cash, and honestly
+as a failed one. The post mortem on the site is the point: the product was built
+before the customer was understood, a Treasury sweep at Mercury already solved
+it in four clicks, and the compliance layer that made the shares legal is
+exactly what made them useless without a licence. Say "I built and shipped it",
+never "I had customers".
 
 ## Live deployment
 
