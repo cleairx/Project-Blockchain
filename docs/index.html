@@ -534,26 +534,26 @@ section { scroll-margin-top: 86px; }
           </div>
           <div class="crow is-lead">
             <span class="crow-label">Three month Treasury</span>
-            <span class="crow-val num">5.00%</span>
+            <span class="crow-val num" id="tsyRate"><span class="skl" style="width:3.2em"></span></span>
           </div>
         </div>
-        <p class="compare-note">Illustrative rates. The deployed contract is configured at 500 basis points.</p>
+        <p class="compare-note" id="tsyNote">Loading the current Treasury yield.</p>
       </div>
     </div>
 
     <figure class="panel chartwrap rv" style="margin-left:0;margin-right:0">
       <div class="chart-head">
-        <h3>What £250,000 of runway does in a year</h3>
+        <h3>What $250,000 of runway does in a year</h3>
         <div class="chart-legend" aria-hidden="true">
           <span><i class="lg-swatch" style="background:var(--accent-line)"></i>Carry</span>
           <span><i class="lg-swatch" style="background:var(--text-dim)"></i>Checking</span>
         </div>
       </div>
       <div class="chart-box" id="chartBox">
-        <svg id="chart" viewBox="0 0 760 300" role="img" aria-label="Line chart comparing 250,000 held in Carry against a business checking account over twelve months. Carry ends at 262,125 and checking at 250,025."></svg>
+        <svg id="chart" viewBox="0 0 760 300" role="img" aria-label="Line chart comparing 250,000 dollars held in Carry against a business checking account over twelve months."></svg>
         <div class="tip" id="tip" role="status" aria-live="polite"></div>
       </div>
-      <figcaption class="chart-note">Carry is plotted at the deployed rate of 500 basis points, net of the 0.15% management charge. Checking is plotted at 0.01%. Simple interest, no compounding, which is how money market funds accrue.</figcaption>
+      <figcaption class="chart-note" id="chartNote">Carry is plotted at the rate the deployed contract is currently paying, net of the 0.15% management charge. Checking is plotted at 0.01%. Simple interest, no compounding, which is how money market funds accrue.</figcaption>
     </figure>
   </div>
 </section>
@@ -750,7 +750,7 @@ section { scroll-margin-top: 86px; }
       </details>
       <details>
         <summary>Is this live with real money?</summary>
-        <div class="answer">Not yet. Carry is in private beta on the Ethereum Sepolia test network, and the stablecoin in the beta is a test token with no value. You can use the fund today with testnet funds and read every contract that runs it. We are not a registered investment adviser, broker dealer, or transfer agent, and nothing here is an offer of securities.</div>
+        <div class="answer">No, and deliberately so. Taking client money would require three things we do not have: a securities registration or exemption to issue the shares, a registered transfer agent to maintain the holder register, and money transmission or banking permissions to hold the cash. The contract is also unaudited, which on its own is reason enough. So Carry runs on the Ethereum Sepolia test network with a test stablecoin that has no value. You can use it today and read every contract behind it.</div>
       </details>
     </div>
   </div>
@@ -859,7 +859,7 @@ section { scroll-margin-top: 86px; }
     var s = whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return places > 0 ? s + "." + frac : s;
   }
-  function gbp(n) { return "£" + Math.round(n).toLocaleString("en-GB"); }
+  function usd(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
 
   // ---------- live NAV ----------
   var checkpoint = null, lastAccrual = null, rateBps = null;
@@ -911,6 +911,17 @@ section { scroll-margin-top: 86px; }
       $("navSub").textContent = "Priced from the chain clock at " + rate + " a year";
       $("rpcError").hidden = true;
       paintNav();
+
+      // Plot the fund at the rate it is actually paying, not a written-in one.
+      if (CHART) {
+        var netPct = Number(rateBps) / 100 - MGMT_FEE_PCT;
+        CHART.draw(netPct);
+        $("chartNote").textContent =
+          "Carry is plotted at the " + rate + " the deployed contract is currently paying, " +
+          "net of the " + MGMT_FEE_PCT.toFixed(2) + "% management charge, so " +
+          netPct.toFixed(2) + "% to the holder. Checking is plotted at 0.01%. " +
+          "Simple interest, no compounding, which is how money market funds accrue.";
+      }
     }).catch(function (e) {
       console.error(e);
       $("rpcError").hidden = false;
@@ -923,82 +934,148 @@ section { scroll-margin-top: 86px; }
   setInterval(paintNav, 500);
 
   // ---------- accrual chart ----------
-  // Single comparison, two series, both direct-labelled and in the legend.
-  // Simple interest, matching how the contract accrues.
-  (function chart() {
+  // Two series, each carrying a legend entry and a direct label at the line end.
+  // Simple interest, matching how the contract accrues, so the line is straight.
+  // Redrawn whenever the contract reports a different rate.
+  var CHART = (function () {
     var svg = $("chart"), box = $("chartBox"), tip = $("tip");
-    if (!svg) return;
+    if (!svg) return { draw: function () {} };
 
-    var P0 = 250000, NET = 0.0485, CHK = 0.0001, MONTHS = 12;
+    var P0 = 250000, CHK = 0.0001, MONTHS = 12;
     var W = 760, H = 300, L = 8, R = 92, T = 18, B = 40;
+    var carry = [], check = [], X, Y, cx, cd, bound = false, drawnAt = null;
 
-    var carry = [], check = [];
-    for (var m = 0; m <= MONTHS; m++) {
-      carry.push(P0 * (1 + NET * m / 12));
-      check.push(P0 * (1 + CHK * m / 12));
+    function niceTicks(lo, hi, want) {
+      var span = hi - lo;
+      if (!(span > 0)) return [lo];
+      var step = Math.pow(10, Math.floor(Math.log10(span / want)));
+      [1, 2, 2.5, 5, 10].some(function (m) {
+        if (span / (step * m) <= want) { step *= m; return true; }
+        return false;
+      });
+      var out = [], v = Math.ceil(lo / step) * step;
+      for (; v <= hi + 1e-6; v += step) out.push(v);
+      return out;
     }
-    var yMin = 248500, yMax = 263500;
-    var X = function (m) { return L + (W - L - R) * (m / MONTHS); };
-    var Y = function (v) { return T + (H - T - B) * (1 - (v - yMin) / (yMax - yMin)); };
 
-    function path(arr) {
-      return arr.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); }).join(" ");
+    function draw(netPct) {
+      if (drawnAt !== null && Math.abs(netPct - drawnAt) < 1e-9) return;
+      drawnAt = netPct;
+      var net = netPct / 100;
+
+      carry = []; check = [];
+      for (var m = 0; m <= MONTHS; m++) {
+        carry.push(P0 * (1 + net * m / 12));
+        check.push(P0 * (1 + CHK * m / 12));
+      }
+
+      var top = Math.max(carry[MONTHS], P0 * 1.002), range = Math.max(top - P0, P0 * 0.004);
+      var yMin = P0 - range * 0.14, yMax = top + range * 0.2;
+
+      X = function (i) { return L + (W - L - R) * (i / MONTHS); };
+      Y = function (v) { return T + (H - T - B) * (1 - (v - yMin) / (yMax - yMin)); };
+
+      function path(arr) {
+        return arr.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); }).join(" ");
+      }
+
+      var grid = "";
+      niceTicks(yMin, yMax, 4).forEach(function (v) {
+        grid += '<line x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) +
+                '" stroke="var(--border)" stroke-width="1"/>' +
+                '<text x="' + L + '" y="' + (Y(v) - 7).toFixed(1) + '" fill="var(--text-dim)" font-size="11" ' +
+                'font-family="JetBrains Mono, monospace">' + usd(v) + "</text>";
+      });
+
+      var xlab = "";
+      [0, 3, 6, 9, 12].forEach(function (m) {
+        xlab += '<text x="' + X(m).toFixed(1) + '" y="' + (H - 12) + '" fill="var(--text-dim)" font-size="11" ' +
+                'text-anchor="' + (m === 0 ? "start" : "middle") + '" font-family="JetBrains Mono, monospace">' +
+                (m === 0 ? "Today" : m + "m") + "</text>";
+      });
+
+      svg.setAttribute("aria-label",
+        "Line chart comparing $250,000 held in Carry against a business checking account over twelve months. " +
+        "Carry ends at " + usd(carry[MONTHS]) + " and checking at " + usd(check[MONTHS]) + ".");
+
+      svg.innerHTML =
+        '<defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--accent-line)" stop-opacity=".2"/>' +
+        '<stop offset="100%" stop-color="var(--accent-line)" stop-opacity="0"/>' +
+        "</linearGradient></defs>" +
+        grid + xlab +
+        '<path d="' + path(carry) + " L" + X(MONTHS).toFixed(1) + " " + Y(yMin).toFixed(1) +
+          " L" + X(0).toFixed(1) + " " + Y(yMin).toFixed(1) + ' Z" fill="url(#cf)"/>' +
+        '<path d="' + path(check) + '" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>' +
+        '<path d="' + path(carry) + '" fill="none" stroke="var(--accent-line)" stroke-width="2" stroke-linecap="round"/>' +
+        '<circle cx="' + X(MONTHS).toFixed(1) + '" cy="' + Y(carry[MONTHS]).toFixed(1) + '" r="4.5" fill="var(--accent-line)"/>' +
+        '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(carry[MONTHS]) - 2).toFixed(1) + '" fill="var(--text)" font-size="13" font-weight="500" font-family="JetBrains Mono, monospace">' + usd(carry[MONTHS]) + "</text>" +
+        '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(carry[MONTHS]) + 14).toFixed(1) + '" fill="var(--text-mid)" font-size="11">Carry</text>' +
+        '<circle cx="' + X(MONTHS).toFixed(1) + '" cy="' + Y(check[MONTHS]).toFixed(1) + '" r="4" fill="var(--text-dim)"/>' +
+        '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(check[MONTHS]) + 4).toFixed(1) + '" fill="var(--text-mid)" font-size="13" font-family="JetBrains Mono, monospace">' + usd(check[MONTHS]) + "</text>" +
+        '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(check[MONTHS]) + 20).toFixed(1) + '" fill="var(--text-dim)" font-size="11">Checking</text>' +
+        '<line id="cx" x1="0" y1="' + T + '" x2="0" y2="' + (H - B) + '" stroke="var(--border-2)" stroke-width="1" opacity="0"/>' +
+        '<circle id="cd" r="5" fill="var(--accent-line)" stroke="var(--surface)" stroke-width="2" opacity="0"/>';
+
+      cx = svg.querySelector("#cx"); cd = svg.querySelector("#cd");
+
+      if (!bound) {
+        box.addEventListener("pointermove", move);
+        box.addEventListener("pointerleave", leave);
+        bound = true;
+      }
     }
-
-    var grid = "", ticks = [250000, 254000, 258000, 262000];
-    ticks.forEach(function (v) {
-      grid += '<line x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) +
-              '" stroke="var(--border)" stroke-width="1"/>' +
-              '<text x="' + L + '" y="' + (Y(v) - 7).toFixed(1) + '" fill="var(--text-dim)" font-size="11" ' +
-              'font-family="JetBrains Mono, monospace">' + gbp(v) + '</text>';
-    });
-
-    var xlab = "";
-    [0, 3, 6, 9, 12].forEach(function (m) {
-      xlab += '<text x="' + X(m).toFixed(1) + '" y="' + (H - 12) + '" fill="var(--text-dim)" font-size="11" ' +
-              'text-anchor="' + (m === 0 ? "start" : "middle") + '" font-family="JetBrains Mono, monospace">' +
-              (m === 0 ? "Today" : m + "m") + "</text>";
-    });
-
-    svg.innerHTML =
-      '<defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="var(--accent-line)" stop-opacity=".2"/>' +
-      '<stop offset="100%" stop-color="var(--accent-line)" stop-opacity="0"/>' +
-      '</linearGradient></defs>' +
-      grid + xlab +
-      '<path d="' + path(carry) + " L" + X(MONTHS).toFixed(1) + " " + Y(yMin).toFixed(1) +
-        " L" + X(0).toFixed(1) + " " + Y(yMin).toFixed(1) + ' Z" fill="url(#cf)"/>' +
-      '<path d="' + path(check) + '" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>' +
-      '<path d="' + path(carry) + '" fill="none" stroke="var(--accent-line)" stroke-width="2" stroke-linecap="round"/>' +
-      '<circle cx="' + X(MONTHS).toFixed(1) + '" cy="' + Y(carry[MONTHS]).toFixed(1) + '" r="4.5" fill="var(--accent-line)"/>' +
-      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(carry[MONTHS]) - 2).toFixed(1) + '" fill="var(--text)" font-size="13" font-weight="500" font-family="JetBrains Mono, monospace">' + gbp(carry[MONTHS]) + '</text>' +
-      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(carry[MONTHS]) + 14).toFixed(1) + '" fill="var(--text-mid)" font-size="11">Carry</text>' +
-      '<circle cx="' + X(MONTHS).toFixed(1) + '" cy="' + Y(check[MONTHS]).toFixed(1) + '" r="4" fill="var(--text-dim)"/>' +
-      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(check[MONTHS]) + 4).toFixed(1) + '" fill="var(--text-mid)" font-size="13" font-family="JetBrains Mono, monospace">' + gbp(check[MONTHS]) + '</text>' +
-      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(check[MONTHS]) + 20).toFixed(1) + '" fill="var(--text-dim)" font-size="11">Checking</text>' +
-      '<line id="cx" x1="0" y1="' + T + '" x2="0" y2="' + (H - B) + '" stroke="var(--border-2)" stroke-width="1" opacity="0"/>' +
-      '<circle id="cd" r="5" fill="var(--accent-line)" stroke="var(--surface)" stroke-width="2" opacity="0"/>';
-
-    var cx = svg.querySelector("#cx"), cd = svg.querySelector("#cd");
 
     function move(ev) {
+      if (!cx) return;
       var r = svg.getBoundingClientRect();
-      var px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left) / r.width * W;
+      var px = (ev.clientX - r.left) / r.width * W;
       var m = Math.round(Math.max(0, Math.min(MONTHS, (px - L) / (W - L - R) * MONTHS)));
       cx.setAttribute("x1", X(m)); cx.setAttribute("x2", X(m)); cx.setAttribute("opacity", ".9");
       cd.setAttribute("cx", X(m)); cd.setAttribute("cy", Y(carry[m])); cd.setAttribute("opacity", "1");
       tip.innerHTML = '<div class="tip-m">' + (m === 0 ? "Today" : "Month " + m) + "</div>" +
-        '<div class="tip-r"><span>Carry</span><b>' + gbp(carry[m]) + "</b></div>" +
-        '<div class="tip-r"><span>Checking</span><b>' + gbp(check[m]) + "</b></div>";
-      // Keep the tooltip inside the figure at both ends of the series.
+        '<div class="tip-r"><span>Carry</span><b>' + usd(carry[m]) + "</b></div>" +
+        '<div class="tip-r"><span>Checking</span><b>' + usd(check[m]) + "</b></div>";
       tip.style.left = Math.min(88, Math.max(12, X(m) / W * 100)) + "%";
       tip.style.top = (Y(carry[m]) / H * r.height) + "px";
       tip.classList.add("on");
     }
-    function leave() { cx.setAttribute("opacity", "0"); cd.setAttribute("opacity", "0"); tip.classList.remove("on"); }
+    function leave() {
+      if (!cx) return;
+      cx.setAttribute("opacity", "0"); cd.setAttribute("opacity", "0"); tip.classList.remove("on");
+    }
 
-    box.addEventListener("pointermove", move);
-    box.addEventListener("pointerleave", leave);
+    return { draw: draw };
+  })();
+
+  var MGMT_FEE_PCT = 0.15;
+  CHART.draw(5.00 - MGMT_FEE_PCT);
+
+  // ---------- live Treasury benchmark ----------
+  // Served by /api/treasury, which fetches upstream and is edge cached for six
+  // hours, so this figure is never more than six hours behind the published rate.
+  (function benchmark() {
+    var el = $("tsyRate"), note = $("tsyNote");
+    if (!el) return;
+    fetch("/api/treasury", { headers: { accept: "application/json" } })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error(r.status)); })
+      .then(function (d) {
+        if (!Number.isFinite(d.rate)) throw new Error("no rate");
+        el.textContent = d.rate.toFixed(2) + "%";
+        var when = d.asOf
+          ? new Date(d.asOf + "T00:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+          : null;
+        note.textContent = d.live
+          ? "Three month Treasury as published on " + when + ", via " + d.source +
+            ". Checking is illustrative. Refreshed every six hours."
+          : "Treasury feed unavailable, showing the last recorded figure from " + when +
+            ". Checking is illustrative.";
+      })
+      .catch(function (e) {
+        console.error(e);
+        el.textContent = "4.09%";
+        note.textContent = "Treasury feed unreachable, showing the last recorded figure. Checking is illustrative.";
+      });
   })();
 
   // ---------- wallet ----------
