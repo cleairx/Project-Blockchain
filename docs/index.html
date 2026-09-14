@@ -3,78 +3,92 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Carry | Treasury yield for idle startup cash</title>
-<meta name="description" content="A tokenized money market fund on Ethereum. Subscribe a stablecoin, hold shares that price up as Treasury bills accrue. Live on Sepolia." />
-<meta property="og:title" content="Carry | Treasury yield for idle startup cash" />
-<meta property="og:description" content="A tokenized money market fund on Ethereum. Live on Sepolia testnet." />
+<title>Carry | Treasury yield for idle company cash</title>
+<meta name="description" content="Hold your reserves in tokenized Treasury bills. Yield accrues every second, redemption settles in one transaction, and the share register is enforced by the contract itself." />
+<meta property="og:title" content="Carry | Treasury yield for idle company cash" />
+<meta property="og:description" content="Hold your reserves in tokenized Treasury bills. Yield accrues every second and redemption settles in one transaction." />
+<meta name="theme-color" content="#0c0e12" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#fbfbfa" media="(prefers-color-scheme: light)" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
-/* ============================================================
+/* ==========================================================================
    CARRY
-   Tokens. One accent (amber). One radius system. Auto theme.
-   Radius rule: cards 14px, panels 18px, inputs & buttons 10px.
-   ============================================================ */
+   One accent (amber). One radius system: panels 20, cards 14, controls 10.
+   Auto theme, both modes composed separately rather than flipped.
+   Chart marks are validated steps: #a15c00 light, #c8851c dark.
+   ========================================================================== */
 
 :root {
   color-scheme: light dark;
 
-  --bg:        #fbfbfa;
-  --bg-sunk:   #f2f2f0;
-  --surface:   #ffffff;
-  --surface-2: #f7f7f5;
-  --border:    #e2e1dd;
-  --border-strong: #cbc9c3;
+  --bg:         #fbfbfa;
+  --bg-sunk:    #f4f4f2;
+  --surface:    #fdfdfc;
+  --surface-2:  #f8f8f6;
+  --raise:      rgba(255,255,255,.9);
+  --border:     #e5e4e0;
+  --border-2:   #d3d1cb;
 
-  --text:      #16171a;
-  --text-mid:  #55565b;
-  --text-dim:  #83848a;
+  --text:       #15161a;
+  --text-mid:   #56575d;
+  --text-dim:   #86878d;
 
   --accent:      #a15c00;
-  --accent-bg:   #f59e0b;
-  --accent-on:   #1a1300;
-  --accent-soft: #fdf3e0;
+  --accent-bg:   #f0990a;
+  --accent-hi:   #ffb02e;
+  --accent-on:   #1b1300;
+  --accent-soft: #fdf4e4;
+  --accent-line: #a15c00;
+  --accent-glow: 240 153 10;
 
-  --pos: #17663f;
-  --neg: #a32020;
+  --pos: #166b41;
+  --neg: #a0211f;
 
-  --r-panel: 18px;
+  --shade: 22 20 16;
+
+  --r-panel: 20px;
   --r-card:  14px;
   --r-ctl:   10px;
 
-  --sp-section: clamp(5rem, 9vw, 8.5rem);
-  --maxw: 1240px;
-
+  --sec:  clamp(5.5rem, 9.5vw, 9rem);
+  --maxw: 1200px;
   --ease: cubic-bezier(.16,1,.3,1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:        #0d0f13;
-    --bg-sunk:   #08090c;
-    --surface:   #14171d;
-    --surface-2: #191d24;
-    --border:    #262b34;
-    --border-strong: #39404c;
+    --bg:         #0c0e12;
+    --bg-sunk:    #08090c;
+    --surface:    #14171d;
+    --surface-2:  #181c23;
+    --raise:      rgba(255,255,255,.055);
+    --border:     #242932;
+    --border-2:   #363d49;
 
-    --text:      #f4f5f7;
-    --text-mid:  #a6abb5;
-    --text-dim:  #767c88;
+    --text:       #f3f4f7;
+    --text-mid:   #a4a9b4;
+    --text-dim:   #747a86;
 
     --accent:      #f5b342;
-    --accent-bg:   #f59e0b;
-    --accent-on:   #1a1300;
-    --accent-soft: #231a08;
+    --accent-bg:   #f0990a;
+    --accent-hi:   #ffb02e;
+    --accent-on:   #1b1300;
+    --accent-soft: #221909;
+    --accent-line: #c8851c;
+    --accent-glow: 240 153 10;
 
-    --pos: #4ac68a;
-    --neg: #f0736b;
+    --pos: #45c184;
+    --neg: #ef6f67;
+
+    --shade: 0 0 0;
   }
 }
 
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
@@ -84,303 +98,370 @@ body {
   font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.55;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
-img { max-width: 100%; display: block; }
-
+img, svg { display: block; max-width: 100%; }
 a { color: inherit; }
 
-.wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 24px; }
+/* Film grain. Fixed and inert so it never repaints on scroll. */
+.grain {
+  position: fixed; inset: 0; z-index: 90; pointer-events: none;
+  opacity: .028; mix-blend-mode: normal;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) { .grain { opacity: .05; } }
+
+.wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: 28px; }
 @media (max-width: 640px) { .wrap { padding-inline: 18px; } }
 
-.num { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; font-variant-numeric: tabular-nums; }
+.num { font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace; font-variant-numeric: tabular-nums; font-feature-settings: "zero" 1; }
 
-h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.025em; line-height: 1.06; }
+h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.032em; line-height: 1.04; }
 p { margin: 0; }
 
 .eyebrow {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 20px;
+  font-size: 11px; letter-spacing: .17em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 18px;
 }
 
-.lede { color: var(--text-mid); font-size: clamp(1rem, 1.6vw, 1.15rem); max-width: 62ch; }
+.lede { color: var(--text-mid); font-size: clamp(1rem, 1.55vw, 1.13rem); line-height: 1.62; max-width: 60ch; }
 
-/* ---------- Buttons ---------- */
+/* ---------------- Surfaces ---------------- */
+.panel {
+  position: relative;
+  background:
+    linear-gradient(180deg, var(--raise), transparent 42%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-panel);
+  box-shadow:
+    0 1px 2px rgb(var(--shade) / .04),
+    0 12px 28px -14px rgb(var(--shade) / .16),
+    0 36px 70px -40px rgb(var(--shade) / .3);
+}
+
+.card {
+  background:
+    linear-gradient(180deg, var(--raise), transparent 50%),
+    var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+
+/* ---------------- Buttons ---------------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
   white-space: nowrap;
-  min-height: 46px; padding: 0 1.4rem;
+  min-height: 48px; padding: 0 1.45rem;
   border-radius: var(--r-ctl);
-  font: inherit; font-size: .95rem; font-weight: 500;
+  font: inherit; font-size: .95rem; font-weight: 500; letter-spacing: -0.01em;
   text-decoration: none; cursor: pointer;
   border: 1px solid transparent;
-  transition: background-color .22s var(--ease), border-color .22s var(--ease), transform .12s var(--ease), color .22s var(--ease);
+  transition: background-color .22s var(--ease), border-color .22s var(--ease),
+              transform .13s var(--ease), box-shadow .22s var(--ease), color .22s var(--ease);
 }
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible { outline: 2px solid var(--accent-bg); outline-offset: 3px; }
 
-.btn-primary { background: var(--accent-bg); color: var(--accent-on); font-weight: 600; }
-.btn-primary:hover { background: #ffb02e; }
-.btn-primary:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
+.btn-primary {
+  background: var(--accent-bg); color: var(--accent-on); font-weight: 600;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .28), 0 6px 18px -8px rgb(var(--accent-glow) / .55);
+}
+.btn-primary:hover { background: var(--accent-hi); box-shadow: inset 0 1px 0 rgb(255 255 255 / .34), 0 9px 24px -8px rgb(var(--accent-glow) / .7); }
+.btn-primary:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; box-shadow: none; }
 
-.btn-ghost { border-color: var(--border-strong); color: var(--text); background: transparent; }
+.btn-ghost { border-color: var(--border-2); color: var(--text); background: transparent; }
 .btn-ghost:hover { background: var(--surface-2); border-color: var(--text-dim); }
 
-.btn-sm { min-height: 40px; font-size: .875rem; padding: 0 1rem; }
+.btn-sm { min-height: 40px; font-size: .88rem; padding: 0 1.05rem; }
 
-/* ---------- Nav ---------- */
+/* ---------------- Nav ---------------- */
 .nav {
-  position: sticky; top: 0; z-index: 50;
-  height: 68px;
+  position: sticky; top: 0; z-index: 60; height: 70px;
   display: flex; align-items: center;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border-bottom: 1px solid transparent;
+  transition: border-color .3s var(--ease), background-color .3s var(--ease);
 }
+.nav.stuck { border-bottom-color: var(--border); }
 .nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
-.brand { display: flex; align-items: center; gap: .6rem; font-weight: 600; font-size: 1.06rem; letter-spacing: -0.02em; text-decoration: none; }
-.brand-mark { width: 22px; height: 22px; flex: none; }
-.nav-links { display: flex; align-items: center; gap: 1.9rem; }
+.brand { display: inline-flex; align-items: center; gap: .62rem; font-weight: 600; font-size: 1.07rem; letter-spacing: -0.028em; text-decoration: none; }
+.brand-mark { width: 23px; height: 23px; flex: none; }
+.nav-links { display: flex; align-items: center; gap: 2rem; }
 .nav-links a { font-size: .9rem; color: var(--text-mid); text-decoration: none; transition: color .2s var(--ease); }
 .nav-links a:hover { color: var(--text); }
-@media (max-width: 860px) { .nav-links { display: none; } }
+@media (max-width: 880px) { .nav-links { display: none; } }
 
-/* ---------- Hero: asymmetric split ---------- */
-.hero { padding-top: clamp(3.5rem, 6vw, 5.5rem); padding-bottom: var(--sp-section); }
-.hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(2.5rem, 5vw, 5rem); align-items: center; }
-@media (max-width: 980px) { .hero-grid { grid-template-columns: 1fr; gap: 3rem; } }
-
-.hero h1 { font-size: clamp(2.6rem, 6vw, 4.1rem); }
-.hero .lede { margin-top: 1.5rem; font-size: clamp(1.05rem, 1.9vw, 1.24rem); max-width: 34ch; }
-.hero-cta { display: flex; gap: .8rem; margin-top: 2.4rem; flex-wrap: wrap; }
-
-/* Live NAV panel (real contract data, polled + interpolated) */
-.navpanel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-panel);
-  padding: clamp(1.5rem, 3vw, 2.2rem);
-  box-shadow: 0 24px 60px -30px color-mix(in srgb, var(--text) 28%, transparent);
+/* ---------------- Hero ---------------- */
+.hero { position: relative; padding-top: clamp(3.5rem, 6vw, 5.5rem); padding-bottom: var(--sec); }
+.hero::before {
+  content: ""; position: absolute; inset: -20% -10% auto -10%; height: 130%;
+  background:
+    radial-gradient(58% 48% at 72% 22%, rgb(var(--accent-glow) / .13), transparent 70%),
+    radial-gradient(44% 40% at 12% 0%, rgb(var(--accent-glow) / .06), transparent 72%);
+  pointer-events: none; z-index: -1;
 }
-.navpanel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; }
-.navpanel-label { font-size: .8rem; color: var(--text-dim); letter-spacing: .01em; }
-.live { display: inline-flex; align-items: center; gap: .45rem; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--pos); font-family: 'JetBrains Mono', monospace; }
-.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); }
+.hero-grid { display: grid; grid-template-columns: 1.02fr .98fr; gap: clamp(2.5rem, 5vw, 4.5rem); align-items: center; }
+@media (max-width: 1000px) { .hero-grid { grid-template-columns: 1fr; gap: 3rem; } }
+
+.hero h1 { font-size: clamp(2.7rem, 6.2vw, 4.3rem); max-width: 11ch; }
+.hero .lede { margin-top: 1.55rem; font-size: clamp(1.06rem, 1.8vw, 1.22rem); max-width: 36ch; }
+.hero-cta { display: flex; gap: .75rem; margin-top: 2.4rem; flex-wrap: wrap; }
+
+.navpanel { padding: clamp(1.6rem, 3vw, 2.3rem); }
+.navpanel-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+.navpanel-label { font-size: .82rem; color: var(--text-dim); }
+.live { display: inline-flex; align-items: center; gap: .45rem; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--pos); font-family: 'JetBrains Mono', monospace; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 0 3px rgb(from var(--pos) r g b / .16); }
 @media (prefers-reduced-motion: no-preference) {
-  .live-dot { animation: pulse 2.4s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  .live-dot { animation: pulse 2.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
 }
 
-.nav-figure { font-size: clamp(2.1rem, 4.6vw, 2.9rem); font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+.nav-figure { font-size: clamp(2.2rem, 4.6vw, 3.05rem); font-weight: 500; letter-spacing: -0.045em; line-height: .96; }
 .nav-figure .tail { color: var(--accent); }
-.nav-sub { margin-top: .7rem; font-size: .85rem; color: var(--text-mid); }
+.nav-sub { margin-top: .75rem; font-size: .85rem; color: var(--text-mid); }
 
-.navpanel-rows { margin-top: 1.8rem; display: grid; gap: .1rem; }
-.nrow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--border); font-size: .9rem; }
-.nrow span:first-child { color: var(--text-mid); }
-.nrow span:last-child { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
+.navpanel-rows { margin-top: 1.9rem; }
+.nrow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .78rem 0; border-top: 1px solid var(--border); font-size: .9rem; }
+.nrow > span:first-child { color: var(--text-mid); }
+.nrow > span:last-child { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
 
 .skl { display: inline-block; height: 1em; width: 5.5em; border-radius: 4px; background: var(--surface-2); vertical-align: middle; }
 @media (prefers-reduced-motion: no-preference) {
-  .skl { background: linear-gradient(90deg, var(--surface-2) 25%, var(--bg-sunk) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
-  @keyframes shimmer { to { background-position: -200% 0; } }
+  .skl { background: linear-gradient(90deg, var(--surface-2) 25%, var(--bg-sunk) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: shimmer 1.5s linear infinite; }
+  @keyframes shimmer { to { background-position: -200% 0 } }
 }
 
-/* ---------- Built-on strip ---------- */
-.builton { padding-block: 2.6rem; border-block: 1px solid var(--border); background: var(--bg-sunk); }
-.builton .wrap { display: flex; align-items: center; gap: clamp(1.6rem, 5vw, 3.6rem); flex-wrap: wrap; justify-content: center; }
-.builton p { font-size: .82rem; color: var(--text-dim); margin-right: .5rem; }
-.builton img { height: 22px; width: auto; opacity: .62; transition: opacity .22s var(--ease); }
+/* ---------------- Built on ---------------- */
+.builton { padding-block: 2.4rem; border-block: 1px solid var(--border); background: var(--bg-sunk); }
+.builton .wrap { display: flex; align-items: center; justify-content: center; gap: clamp(1.7rem, 5vw, 3.4rem); flex-wrap: wrap; }
+.builton p { font-size: .8rem; color: var(--text-dim); letter-spacing: .01em; }
+.builton img { height: 21px; width: auto; opacity: .55; transition: opacity .25s var(--ease); }
 .builton a:hover img { opacity: 1; }
 
-/* ---------- Section scaffolding ---------- */
-section { scroll-margin-top: 84px; }
-.sec { padding-block: var(--sp-section); }
-.sec-head { max-width: 34ch; margin-bottom: clamp(2.5rem, 5vw, 4rem); }
-.sec-head h2 { font-size: clamp(2rem, 4vw, 2.9rem); }
-.sec-head .lede { margin-top: 1.1rem; }
+/* ---------------- Section scaffolding ---------------- */
+section { scroll-margin-top: 86px; }
+.sec { padding-block: var(--sec); }
+.sec-head { max-width: 30ch; margin-bottom: clamp(2.6rem, 5vw, 4rem); }
+.sec-head h2 { font-size: clamp(2.05rem, 4.1vw, 3rem); }
+.sec-head .lede { margin-top: 1.15rem; }
 
-/* ---------- Problem: asymmetric statement ---------- */
+/* ---------------- Problem ---------------- */
 .problem { background: var(--bg-sunk); border-block: 1px solid var(--border); }
-.problem-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: clamp(2.5rem, 6vw, 5rem); align-items: end; }
-@media (max-width: 900px) { .problem-grid { grid-template-columns: 1fr; align-items: start; } }
-.problem h2 { font-size: clamp(2rem, 4.4vw, 3.1rem); max-width: 16ch; }
+.problem-grid { display: grid; grid-template-columns: 1.12fr .88fr; gap: clamp(2.5rem, 6vw, 4.5rem); align-items: end; }
+@media (max-width: 920px) { .problem-grid { grid-template-columns: 1fr; align-items: start; } }
+.problem h2 { font-size: clamp(2.05rem, 4.4vw, 3.1rem); max-width: 15ch; }
 .problem .lede { margin-top: 1.5rem; }
 
-.compare { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; }
+.compare { border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--border); }
 .crow { background: var(--surface); padding: 1.5rem 1.6rem; display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
-.crow-label { font-size: .92rem; color: var(--text-mid); }
-.crow-val { font-family: 'JetBrains Mono', monospace; font-size: 1.75rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.crow + .crow { border-top: 1px solid var(--border); }
+.crow-label { font-size: .91rem; color: var(--text-mid); }
+.crow-val { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-variant-numeric: tabular-nums; letter-spacing: -0.035em; }
+.crow.is-lead { background: linear-gradient(100deg, var(--accent-soft), var(--surface) 78%); }
 .crow.is-lead .crow-val { color: var(--accent); }
-.compare-note { margin-top: .9rem; font-size: .78rem; color: var(--text-dim); }
+.compare-note { margin-top: .95rem; font-size: .78rem; color: var(--text-dim); }
 
-.problem-media { margin-top: clamp(3rem, 6vw, 4.5rem); border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 21 / 7; }
-.problem-media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); }
+/* ---------------- Chart ---------------- */
+.chartwrap { margin-top: clamp(3rem, 6vw, 4.5rem); padding: clamp(1.5rem, 3vw, 2.2rem); }
+.chart-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; margin-bottom: .35rem; }
+.chart-head h3 { font-size: 1.12rem; letter-spacing: -0.025em; }
+.chart-legend { display: flex; gap: 1.3rem; font-size: .82rem; color: var(--text-mid); }
+.chart-legend span { display: inline-flex; align-items: center; gap: .45rem; }
+.lg-swatch { width: 14px; height: 3px; border-radius: 2px; flex: none; }
+.chart-note { font-size: .79rem; color: var(--text-dim); margin-top: 1rem; max-width: 74ch; }
+.chart-box { position: relative; margin-top: 1.3rem; }
+.chart-box svg { width: 100%; height: auto; overflow: visible; }
+.tip {
+  position: absolute; pointer-events: none; opacity: 0;
+  transform: translate(-50%, -118%);
+  background: var(--surface); border: 1px solid var(--border-2); border-radius: var(--r-ctl);
+  padding: .6rem .75rem; font-size: .8rem; white-space: nowrap;
+  box-shadow: 0 10px 28px -12px rgb(var(--shade) / .4);
+  transition: opacity .16s var(--ease);
+  z-index: 2;
+}
+.tip.on { opacity: 1; }
+.tip-m { color: var(--text-dim); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; margin-bottom: .35rem; }
+.tip-r { display: flex; align-items: center; justify-content: space-between; gap: 1.1rem; }
+.tip-r + .tip-r { margin-top: .2rem; }
+.tip-r b { font-family: 'JetBrains Mono', monospace; font-weight: 500; font-variant-numeric: tabular-nums; }
 
-/* ---------- How it works: asymmetric bento, exactly 3 cells ---------- */
-.bento { display: grid; grid-template-columns: 1.25fr 1fr; grid-template-rows: auto auto; gap: 14px; }
-.bcell { border: 1px solid var(--border); border-radius: var(--r-card); padding: clamp(1.5rem, 2.6vw, 2.1rem); background: var(--surface); display: flex; flex-direction: column; }
-.bcell-a { grid-row: span 2; background: var(--surface); position: relative; overflow: hidden; padding: 0; }
-.bcell-a .bmedia { height: 100%; min-height: 260px; }
-.bcell-a .bmedia img { width: 100%; height: 100%; object-fit: cover; }
-.bcell-a .bbody { padding: clamp(1.5rem, 2.6vw, 2.1rem); }
-.bcell-b { background: linear-gradient(150deg, var(--accent-soft), var(--surface) 70%); }
-.bcell h3 { font-size: 1.22rem; margin-bottom: .6rem; }
-.bcell p { font-size: .93rem; color: var(--text-mid); }
-.bstep { font-family: 'JetBrains Mono', monospace; font-size: .74rem; color: var(--accent); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1.1rem; }
-@media (max-width: 860px) {
+/* ---------------- Bento ---------------- */
+.bento { display: grid; grid-template-columns: 1.22fr 1fr; gap: 14px; }
+.bcell { padding: clamp(1.6rem, 2.7vw, 2.15rem); display: flex; flex-direction: column; justify-content: flex-end; min-height: 230px; position: relative; overflow: hidden; }
+.bcell-a { grid-row: span 2; justify-content: space-between; background: linear-gradient(158deg, var(--accent-soft), var(--surface) 62%); }
+.bcell-c::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(currentColor .8px, transparent .8px);
+  background-size: 14px 14px; color: var(--border-2); opacity: .5;
+  mask-image: linear-gradient(215deg, #000, transparent 62%);
+  -webkit-mask-image: linear-gradient(215deg, #000, transparent 62%);
+}
+.bcell h3 { font-size: 1.24rem; margin-bottom: .6rem; }
+.bcell p { font-size: .93rem; color: var(--text-mid); position: relative; z-index: 1; }
+.bstep { font-family: 'JetBrains Mono', monospace; font-size: .73rem; color: var(--accent); letter-spacing: .13em; text-transform: uppercase; }
+.bfig { font-family: 'JetBrains Mono', monospace; font-size: clamp(2.6rem, 6vw, 3.8rem); letter-spacing: -0.05em; line-height: 1; color: var(--accent); margin-bottom: 1.4rem; }
+@media (max-width: 880px) {
   .bento { grid-template-columns: 1fr; }
   .bcell-a { grid-row: auto; }
-  .bcell-a .bmedia { min-height: 200px; }
+  .bcell { min-height: 0; }
 }
 
-/* ---------- Live fund app panel ---------- */
+/* ---------------- Live fund ---------------- */
 .fund { background: var(--bg-sunk); border-block: 1px solid var(--border); }
-.fund-grid { display: grid; grid-template-columns: 1fr 420px; gap: clamp(2rem, 4vw, 3.5rem); align-items: start; }
-@media (max-width: 1040px) { .fund-grid { grid-template-columns: 1fr; } }
+.fund-grid { display: grid; grid-template-columns: 1fr 408px; gap: clamp(2rem, 4vw, 3.2rem); align-items: start; }
+@media (max-width: 1060px) { .fund-grid { grid-template-columns: 1fr; } }
 
-.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; }
 @media (max-width: 560px) { .stats { grid-template-columns: 1fr; } }
-.stat { background: var(--surface); padding: 1.4rem 1.5rem; }
-.stat-k { font-size: .8rem; color: var(--text-mid); margin-bottom: .5rem; }
-.stat-v { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.stat { background: var(--surface); padding: 1.45rem 1.55rem; border-top: 1px solid var(--border); border-left: 1px solid var(--border); }
+.stat:nth-child(-n+2) { border-top: 0; }
+.stat:nth-child(odd) { border-left: 0; }
+@media (max-width: 560px) { .stat { border-left: 0; } .stat:first-child { border-top: 0; } .stat:nth-child(2) { border-top: 1px solid var(--border); } }
+.stat-k { font-size: .8rem; color: var(--text-mid); margin-bottom: .55rem; }
+.stat-v { font-family: 'JetBrains Mono', monospace; font-size: 1.42rem; font-variant-numeric: tabular-nums; letter-spacing: -0.032em; }
 
-.terminal {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-panel);
-  padding: clamp(1.4rem, 2.6vw, 1.9rem);
-  position: sticky; top: 92px;
-}
-@media (max-width: 1040px) { .terminal { position: static; } }
-.terminal h3 { font-size: 1.05rem; margin-bottom: .3rem; }
+.terminal { padding: clamp(1.5rem, 2.7vw, 2rem); position: sticky; top: 94px; }
+@media (max-width: 1060px) { .terminal { position: static; } }
+.terminal h3 { font-size: 1.08rem; margin-bottom: .3rem; }
 .terminal-sub { font-size: .85rem; color: var(--text-mid); margin-bottom: 1.5rem; }
 
 .field { margin-bottom: 1rem; }
-.field label { display: block; font-size: .84rem; font-weight: 500; margin-bottom: .45rem; color: var(--text); }
+.field label { display: block; font-size: .84rem; font-weight: 500; margin-bottom: .45rem; }
 .field input {
-  width: 100%; min-height: 46px; padding: 0 .9rem;
+  width: 100%; min-height: 48px; padding: 0 .9rem;
   background: var(--bg); color: var(--text);
-  border: 1px solid var(--border-strong); border-radius: var(--r-ctl);
+  border: 1px solid var(--border-2); border-radius: var(--r-ctl);
   font-family: 'JetBrains Mono', monospace; font-size: .95rem;
 }
 .field input::placeholder { color: var(--text-dim); }
 .field input:focus { outline: 2px solid var(--accent-bg); outline-offset: 1px; border-color: transparent; }
-.field .help { font-size: .78rem; color: var(--text-mid); margin-top: .4rem; }
+.field .help { font-size: .78rem; color: var(--text-mid); margin-top: .42rem; }
 
-.state {
-  border: 1px solid var(--border); border-radius: var(--r-ctl);
-  padding: 1rem 1.1rem; font-size: .86rem; color: var(--text-mid);
-  background: var(--surface-2);
-}
+.state { border: 1px solid var(--border); border-radius: var(--r-ctl); padding: 1rem 1.05rem; font-size: .86rem; color: var(--text-mid); background: var(--surface-2); }
 .state strong { color: var(--text); font-weight: 600; display: block; margin-bottom: .3rem; }
-.state.is-warn { border-color: color-mix(in srgb, var(--accent-bg) 45%, var(--border)); background: var(--accent-soft); }
-.state.is-err { border-color: color-mix(in srgb, var(--neg) 40%, var(--border)); }
+.state.is-warn { border-color: color-mix(in srgb, var(--accent-bg) 42%, var(--border)); background: var(--accent-soft); }
+.state.is-err { border-color: color-mix(in srgb, var(--neg) 38%, var(--border)); }
 .state.is-err strong { color: var(--neg); }
 
-.holding { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-ctl); overflow: hidden; margin-bottom: 1.2rem; }
-.hrow { background: var(--surface-2); padding: .75rem 1rem; display: flex; justify-content: space-between; gap: 1rem; font-size: .86rem; }
+.holding { border: 1px solid var(--border); border-radius: var(--r-ctl); overflow: hidden; margin-bottom: 1.2rem; }
+.hrow { background: var(--surface-2); padding: .78rem 1rem; display: flex; justify-content: space-between; gap: 1rem; font-size: .86rem; }
+.hrow + .hrow { border-top: 1px solid var(--border); }
 .hrow span:last-child { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
 
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; }
-.tx-note { margin-top: 1rem; font-size: .8rem; color: var(--text-mid); word-break: break-all; }
+.tx-note { margin-top: 1rem; font-size: .8rem; color: var(--text-mid); word-break: break-word; }
 .tx-note a { color: var(--accent); }
 
-/* ---------- Compliance: image + text split ---------- */
-.comp-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(2.5rem, 5vw, 4.5rem); align-items: center; }
-@media (max-width: 900px) { .comp-grid { grid-template-columns: 1fr; } }
-.comp-media { border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4 / 5; }
-.comp-media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.04); }
-.comp-list { margin: 2rem 0 0; padding: 0; list-style: none; display: grid; gap: 1.6rem; }
-.comp-list h3 { font-size: 1.02rem; margin-bottom: .4rem; }
+.addr { font-family: 'JetBrains Mono', monospace; font-size: .77rem; color: var(--text-mid); line-height: 2; word-break: break-all; }
+.addr a { color: var(--text-mid); text-decoration: none; border-bottom: 1px solid var(--border-2); }
+.addr a:hover { color: var(--accent); }
+
+/* ---------------- Compliance ---------------- */
+.comp-grid { display: grid; grid-template-columns: .82fr 1.18fr; gap: clamp(2.5rem, 5vw, 4.5rem); align-items: center; }
+@media (max-width: 920px) { .comp-grid { grid-template-columns: 1fr; } }
+.comp-media { border-radius: var(--r-card); overflow: hidden; border: 1px solid var(--border); aspect-ratio: 4 / 5; box-shadow: 0 30px 60px -36px rgb(var(--shade) / .45); }
+.comp-media img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.06) brightness(.98); }
+@media (prefers-color-scheme: dark) { .comp-media img { filter: grayscale(1) contrast(1.1) brightness(.72); } }
+.comp-list { margin: 2rem 0 0; padding: 0; list-style: none; display: grid; gap: 1.7rem; }
+.comp-list h3 { font-size: 1.03rem; margin-bottom: .4rem; }
 .comp-list p { font-size: .93rem; color: var(--text-mid); }
 
-/* ---------- Pricing: stat band ---------- */
-.pricing { background: var(--surface-2); border-block: 1px solid var(--border); }
-.price-figure { display: flex; align-items: flex-start; gap: clamp(1.5rem, 4vw, 3rem); flex-wrap: wrap; }
-.price-num { font-family: 'JetBrains Mono', monospace; font-size: clamp(3.4rem, 10vw, 6.2rem); line-height: .9; letter-spacing: -0.04em; color: var(--accent); font-variant-numeric: tabular-nums; }
-.price-body { max-width: 40ch; padding-top: .5rem; }
-.price-body h2 { font-size: clamp(1.5rem, 2.8vw, 2rem); margin-bottom: .8rem; }
-.price-body p { color: var(--text-mid); font-size: 1rem; }
-.price-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; margin-top: clamp(2.5rem, 5vw, 3.5rem); }
-@media (max-width: 700px) { .price-row { grid-template-columns: 1fr; } }
-.price-cell { background: var(--surface); padding: 1.4rem 1.5rem; }
-.price-cell strong { display: block; font-size: .98rem; font-weight: 600; margin-bottom: .3rem; }
+/* ---------------- Pricing ---------------- */
+.pricing { background: var(--bg-sunk); border-block: 1px solid var(--border); }
+.price-figure { display: flex; align-items: flex-start; gap: clamp(1.6rem, 4vw, 3.2rem); flex-wrap: wrap; }
+.price-num { font-family: 'JetBrains Mono', monospace; font-size: clamp(3.6rem, 10vw, 6.4rem); line-height: .86; letter-spacing: -0.055em; color: var(--accent); font-variant-numeric: tabular-nums; }
+.price-body { max-width: 40ch; padding-top: .45rem; }
+.price-body h2 { font-size: clamp(1.55rem, 2.8vw, 2.05rem); margin-bottom: .85rem; }
+.price-body p { color: var(--text-mid); }
+.price-row { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: var(--r-card); overflow: hidden; margin-top: clamp(2.6rem, 5vw, 3.6rem); }
+@media (max-width: 760px) { .price-row { grid-template-columns: 1fr; } }
+.price-cell { background: var(--surface); padding: 1.5rem 1.6rem; border-left: 1px solid var(--border); }
+.price-cell:first-child { border-left: 0; }
+@media (max-width: 760px) { .price-cell { border-left: 0; border-top: 1px solid var(--border); } .price-cell:first-child { border-top: 0; } }
+.price-cell strong { display: block; font-size: .99rem; font-weight: 600; margin-bottom: .32rem; }
 .price-cell span { font-size: .89rem; color: var(--text-mid); }
 
-/* ---------- FAQ: accordion ---------- */
-.faq-list { border-top: 1px solid var(--border); max-width: 820px; }
+/* ---------------- FAQ ---------------- */
+.faq-list { border-top: 1px solid var(--border); max-width: 840px; }
 .faq-list details { border-bottom: 1px solid var(--border); }
 .faq-list summary {
-  cursor: pointer; list-style: none;
-  padding: 1.45rem 3rem 1.45rem 0;
-  font-size: clamp(1rem, 1.8vw, 1.1rem); font-weight: 500;
-  position: relative;
-  transition: color .2s var(--ease);
+  cursor: pointer; list-style: none; padding: 1.5rem 3rem 1.5rem 0;
+  font-size: clamp(1rem, 1.7vw, 1.11rem); font-weight: 500; letter-spacing: -0.018em;
+  position: relative; transition: color .2s var(--ease);
 }
 .faq-list summary::-webkit-details-marker { display: none; }
 .faq-list summary:hover { color: var(--accent); }
 .faq-list summary:focus-visible { outline: 2px solid var(--accent-bg); outline-offset: 3px; border-radius: 4px; }
 .faq-list summary::after {
-  content: ""; position: absolute; right: .4rem; top: 50%;
-  width: 11px; height: 11px; margin-top: -6px;
+  content: ""; position: absolute; right: .45rem; top: 50%;
+  width: 10px; height: 10px; margin-top: -6px;
   border-right: 1.8px solid var(--text-dim); border-bottom: 1.8px solid var(--text-dim);
-  transform: rotate(45deg); transition: transform .25s var(--ease);
+  transform: rotate(45deg); transition: transform .25s var(--ease), border-color .2s var(--ease);
 }
+.faq-list summary:hover::after { border-color: var(--accent); }
 .faq-list details[open] summary::after { transform: rotate(-135deg); margin-top: -2px; }
-.faq-list .answer { padding: 0 3rem 1.6rem 0; color: var(--text-mid); font-size: .98rem; max-width: 66ch; line-height: 1.7; }
+.faq-list .answer { padding: 0 3rem 1.7rem 0; color: var(--text-mid); font-size: .97rem; max-width: 66ch; line-height: 1.72; }
 
-/* ---------- Closing CTA band ---------- */
-.cta { background: var(--bg-sunk); border-block: 1px solid var(--border); }
-.cta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center; }
-@media (max-width: 880px) { .cta-grid { grid-template-columns: 1fr; } }
-.cta h2 { font-size: clamp(1.9rem, 4vw, 2.7rem); max-width: 16ch; }
-.cta p { color: var(--text-mid); margin-top: 1.1rem; max-width: 46ch; }
+/* ---------------- CTA ---------------- */
+.cta { position: relative; overflow: hidden; background: var(--bg-sunk); border-block: 1px solid var(--border); }
+.cta::before {
+  content: ""; position: absolute; inset: auto -10% -60% 20%; height: 130%;
+  background: radial-gradient(50% 50% at 50% 50%, rgb(var(--accent-glow) / .1), transparent 72%);
+  pointer-events: none;
+}
+.cta-grid { position: relative; display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(2rem, 5vw, 4rem); align-items: center; }
+@media (max-width: 900px) { .cta-grid { grid-template-columns: 1fr; } }
+.cta h2 { font-size: clamp(2rem, 4.1vw, 2.9rem); max-width: 15ch; }
+.cta p { color: var(--text-mid); margin-top: 1.15rem; max-width: 44ch; }
 .waitlist { display: flex; gap: .6rem; flex-wrap: wrap; }
 .waitlist input {
-  flex: 1 1 15rem; min-height: 50px; padding: 0 1rem;
+  flex: 1 1 15rem; min-height: 52px; padding: 0 1.05rem;
   background: var(--surface); color: var(--text);
-  border: 1px solid var(--border-strong); border-radius: var(--r-ctl);
+  border: 1px solid var(--border-2); border-radius: var(--r-ctl);
   font: inherit; font-size: .95rem;
 }
 .waitlist input::placeholder { color: var(--text-dim); }
 .waitlist input:focus { outline: 2px solid var(--accent-bg); outline-offset: 1px; border-color: transparent; }
-.waitlist button { flex: 0 0 auto; }
-.waitlist-note { margin-top: .9rem; font-size: .84rem; color: var(--text-mid); }
+.waitlist-note { margin-top: .95rem; font-size: .84rem; color: var(--text-mid); }
 .waitlist-note.is-err { color: var(--neg); }
 
-/* ---------- Footer ---------- */
-.foot { border-top: 1px solid var(--border); padding-block: 3.5rem 3rem; background: var(--bg); }
-.foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 2.5rem; }
-@media (max-width: 760px) { .foot-grid { grid-template-columns: 1fr; gap: 2rem; } }
-.foot h4 { font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-dim); margin: 0 0 1rem; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
-.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
-.foot a { font-size: .9rem; color: var(--text-mid); text-decoration: none; }
+/* ---------------- Footer ---------------- */
+.foot { border-top: 1px solid var(--border); padding-block: 3.8rem 3rem; }
+.foot-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 2.6rem; }
+@media (max-width: 780px) { .foot-grid { grid-template-columns: 1fr; gap: 2.2rem; } }
+.foot h4 { font-size: .74rem; text-transform: uppercase; letter-spacing: .14em; color: var(--text-dim); margin: 0 0 1.05rem; font-weight: 400; font-family: 'JetBrains Mono', monospace; }
+.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .65rem; }
+.foot a { font-size: .9rem; color: var(--text-mid); text-decoration: none; transition: color .2s var(--ease); }
 .foot a:hover { color: var(--text); }
-.foot-note { margin-top: 3rem; padding-top: 1.6rem; border-top: 1px solid var(--border); font-size: .82rem; color: var(--text-dim); max-width: 70ch; }
-.addr { font-family: 'JetBrains Mono', monospace; font-size: .78rem; color: var(--text-mid); word-break: break-all; }
+.foot-note { margin-top: 3.2rem; padding-top: 1.7rem; border-top: 1px solid var(--border); font-size: .81rem; color: var(--text-dim); max-width: 78ch; line-height: 1.65; }
 
-/* ---------- Scroll reveal ---------- */
+/* ---------------- Reveal ---------------- */
 @media (prefers-reduced-motion: no-preference) {
-  .rv { opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .rv { opacity: 0; transform: translateY(20px); transition: opacity .75s var(--ease), transform .75s var(--ease); }
   .rv.in { opacity: 1; transform: none; }
 }
 </style>
 </head>
 <body>
 
-<!-- ========== NAV ========== -->
-<header class="nav">
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
   <div class="wrap">
     <a class="brand" href="#top">
       <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <rect x="1.5" y="1.5" width="21" height="21" rx="6" stroke="currentColor" stroke-width="1.6"/>
-        <path d="M7 15.5c3.2 0 3.2-7 6.4-7 1.6 0 2.4 1.75 3.2 3.5" stroke="#f59e0b" stroke-width="1.9" stroke-linecap="round"/>
+        <rect x="1.5" y="1.5" width="21" height="21" rx="6.5" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M6.6 15.8c3.3 0 3.3-7.2 6.6-7.2 1.7 0 2.5 1.8 3.3 3.6" stroke="#f0990a" stroke-width="2" stroke-linecap="round"/>
       </svg>
       Carry
     </a>
@@ -396,19 +477,19 @@ section { scroll-margin-top: 84px; }
 
 <main id="top">
 
-<!-- ========== HERO ========== -->
+<!-- ===== HERO ===== -->
 <section class="hero">
   <div class="wrap hero-grid">
     <div>
-      <h1>Your runway<br>should earn.</h1>
-      <p class="lede">Idle company cash, held in tokenized Treasury bills. Redeem any day. Yield accrues by the second.</p>
+      <h1>Your runway should earn.</h1>
+      <p class="lede">Company reserves, held in tokenized Treasury bills. Yield accrues every second. Redeem on any block.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="#fund">Open the fund</a>
         <a class="btn btn-ghost" href="https://sepolia.etherscan.io/address/0xd1f36EE39eAAC22E42aE9365300D24f07c515C87">Read the contract</a>
       </div>
     </div>
 
-    <div class="navpanel">
+    <div class="panel navpanel">
       <div class="navpanel-head">
         <div class="navpanel-label">Net asset value per share</div>
         <div class="live"><span class="live-dot"></span>Live</div>
@@ -426,18 +507,18 @@ section { scroll-margin-top: 84px; }
   </div>
 </section>
 
-<!-- ========== BUILT ON ========== -->
+<!-- ===== BUILT ON ===== -->
 <div class="builton">
   <div class="wrap">
     <p>Built on</p>
-    <a href="https://ethereum.org" aria-label="Ethereum"><img src="https://cdn.simpleicons.org/ethereum/9a9a9a" alt="Ethereum" width="22" height="22" loading="lazy" /></a>
-    <a href="https://soliditylang.org" aria-label="Solidity"><img src="https://cdn.simpleicons.org/solidity/9a9a9a" alt="Solidity" width="22" height="22" loading="lazy" /></a>
-    <a href="https://www.openzeppelin.com" aria-label="OpenZeppelin"><img src="https://cdn.simpleicons.org/openzeppelin/9a9a9a" alt="OpenZeppelin" width="22" height="22" loading="lazy" /></a>
-    <a href="https://github.com/cleairx/Project-Blockchain" aria-label="GitHub"><img src="https://cdn.simpleicons.org/github/9a9a9a" alt="GitHub" width="22" height="22" loading="lazy" /></a>
+    <a href="https://ethereum.org" aria-label="Ethereum"><img src="https://cdn.simpleicons.org/ethereum/9a9a9a" alt="Ethereum" width="21" height="21" loading="lazy" /></a>
+    <a href="https://soliditylang.org" aria-label="Solidity"><img src="https://cdn.simpleicons.org/solidity/9a9a9a" alt="Solidity" width="21" height="21" loading="lazy" /></a>
+    <a href="https://www.openzeppelin.com" aria-label="OpenZeppelin"><img src="https://cdn.simpleicons.org/openzeppelin/9a9a9a" alt="OpenZeppelin" width="21" height="21" loading="lazy" /></a>
+    <a href="https://github.com/cleairx/Project-Blockchain" aria-label="GitHub"><img src="https://cdn.simpleicons.org/github/9a9a9a" alt="GitHub" width="21" height="21" loading="lazy" /></a>
   </div>
 </div>
 
-<!-- ========== PROBLEM ========== -->
+<!-- ===== PROBLEM + CHART ===== -->
 <section class="sec problem">
   <div class="wrap">
     <div class="problem-grid rv">
@@ -459,13 +540,25 @@ section { scroll-margin-top: 84px; }
         <p class="compare-note">Illustrative rates. The deployed contract is configured at 500 basis points.</p>
       </div>
     </div>
-    <div class="problem-media rv">
-      <img src="https://picsum.photos/seed/carry-treasury-ledger-desk/1600/540" alt="A desk with printed financial statements" width="1600" height="540" loading="lazy" />
-    </div>
+
+    <figure class="panel chartwrap rv" style="margin-left:0;margin-right:0">
+      <div class="chart-head">
+        <h3>What £250,000 of runway does in a year</h3>
+        <div class="chart-legend" aria-hidden="true">
+          <span><i class="lg-swatch" style="background:var(--accent-line)"></i>Carry</span>
+          <span><i class="lg-swatch" style="background:var(--text-dim)"></i>Checking</span>
+        </div>
+      </div>
+      <div class="chart-box" id="chartBox">
+        <svg id="chart" viewBox="0 0 760 300" role="img" aria-label="Line chart comparing 250,000 held in Carry against a business checking account over twelve months. Carry ends at 262,125 and checking at 250,025."></svg>
+        <div class="tip" id="tip" role="status" aria-live="polite"></div>
+      </div>
+      <figcaption class="chart-note">Carry is plotted at the deployed rate of 500 basis points, net of the 0.15% management charge. Checking is plotted at 0.01%. Simple interest, no compounding, which is how money market funds accrue.</figcaption>
+    </figure>
   </div>
 </section>
 
-<!-- ========== HOW IT WORKS ========== -->
+<!-- ===== HOW IT WORKS ===== -->
 <section class="sec" id="how">
   <div class="wrap">
     <div class="sec-head rv">
@@ -474,39 +567,43 @@ section { scroll-margin-top: 84px; }
     </div>
 
     <div class="bento rv">
-      <article class="bcell bcell-a">
-        <div class="bmedia">
-          <img src="https://picsum.photos/seed/carry-settlement-morning/800/900" alt="Morning light across an office floor" width="800" height="900" loading="lazy" />
-        </div>
-        <div class="bbody">
+      <article class="card bcell bcell-a">
+        <div>
           <div class="bstep">Subscribe</div>
+        </div>
+        <div>
+          <div class="bfig num">1.00</div>
           <h3>Stablecoin in, shares out</h3>
-          <p>Deposit is priced at the net asset value at that exact block. Subscribe an hour later and you receive fewer shares for the same money, because the price has already moved.</p>
+          <p>Your deposit is priced at the net asset value of that exact block. Subscribe an hour later and you receive fewer shares for the same money, because the price has already moved.</p>
         </div>
       </article>
 
-      <article class="bcell bcell-b">
-        <div class="bstep">Accrue</div>
-        <h3>The clock sets the price</h3>
-        <p>No administrator strikes a daily NAV. The contract derives it from elapsed seconds and a stored annual rate, so the value of a share is correct at every block between now and forever.</p>
+      <article class="card bcell">
+        <div style="margin-bottom:auto"><div class="bstep">Accrue</div></div>
+        <div>
+          <h3>The clock sets the price</h3>
+          <p>No administrator strikes a daily NAV. The contract derives it from elapsed seconds and a stored annual rate, so a share is correctly valued at every block from now on.</p>
+        </div>
       </article>
 
-      <article class="bcell">
-        <div class="bstep">Redeem</div>
-        <h3>Out on any block</h3>
-        <p>Burn shares, receive stablecoin at the current price. There is no notice period and no queue, because there is nothing to liquidate.</p>
+      <article class="card bcell bcell-c">
+        <div style="margin-bottom:auto"><div class="bstep">Redeem</div></div>
+        <div>
+          <h3>Out on any block</h3>
+          <p>Burn shares, receive stablecoin at the current price. There is no notice period and no queue, because there is nothing to liquidate first.</p>
+        </div>
       </article>
     </div>
   </div>
 </section>
 
-<!-- ========== LIVE FUND ========== -->
+<!-- ===== LIVE FUND ===== -->
 <section class="sec fund" id="fund">
   <div class="wrap">
     <div class="sec-head rv">
       <p class="eyebrow">Live on Sepolia</p>
       <h2>The fund, running right now.</h2>
-      <p class="lede">Every number below is read from the deployed contract. Connect a wallet to subscribe against it.</p>
+      <p class="lede">Every figure is read from the deployed contract. Connect a wallet to subscribe against it.</p>
     </div>
 
     <div class="fund-grid">
@@ -520,13 +617,13 @@ section { scroll-margin-top: 84px; }
           <div class="stat"><div class="stat-k">Backing status</div><div class="stat-v" id="fBacked"><span class="skl" style="width:4em"></span></div></div>
         </div>
 
-        <div style="margin-top:1.6rem" class="addr">
+        <p class="addr" style="margin-top:1.6rem">
           Fund <a href="https://sepolia.etherscan.io/address/0xd1f36EE39eAAC22E42aE9365300D24f07c515C87">0xd1f36EE39eAAC22E42aE9365300D24f07c515C87</a><br>
-          Test stablecoin <a href="https://sepolia.etherscan.io/address/0x941B691563DF3114368d41498d9e669e10ACCC8b">0x941B691563DF3114368d41498d9e669e10ACCC8b</a>
-        </div>
+          Stablecoin <a href="https://sepolia.etherscan.io/address/0x941B691563DF3114368d41498d9e669e10ACCC8b">0x941B691563DF3114368d41498d9e669e10ACCC8b</a>
+        </p>
       </div>
 
-      <div class="terminal rv">
+      <div class="panel terminal rv">
         <h3>Subscribe</h3>
         <p class="terminal-sub">Sepolia testnet. No real money moves.</p>
 
@@ -548,7 +645,7 @@ section { scroll-margin-top: 84px; }
           <div id="notWhitelisted" hidden>
             <div class="state is-warn" style="margin-bottom:1rem">
               <strong>Not on the holder register</strong>
-              Fund shares are a security, so only approved addresses can hold them. Your address is not approved, and the contract will reject a subscription. This is the compliance layer working, not an error.
+              Fund shares are a security, so only approved addresses can hold them. Your address is not approved and the contract will reject a subscription. This is the compliance layer working, not an error.
             </div>
             <button class="btn btn-ghost btn-sm" style="width:100%" id="btnFaucet">Mint test stablecoin anyway</button>
           </div>
@@ -578,14 +675,14 @@ section { scroll-margin-top: 84px; }
   </div>
 </section>
 
-<!-- ========== COMPLIANCE ========== -->
+<!-- ===== COMPLIANCE ===== -->
 <section class="sec" id="compliance">
   <div class="wrap comp-grid rv">
     <div class="comp-media">
-      <img src="https://picsum.photos/seed/carry-register-archive-room/900/1125" alt="Rows of archived record binders" width="900" height="1125" loading="lazy" />
+      <img src="https://picsum.photos/seed/carry-register-archive-room/900/1125" alt="Rows of archived record binders on shelving" width="900" height="1125" loading="lazy" />
     </div>
     <div>
-      <h2 style="font-size:clamp(1.9rem,3.8vw,2.7rem)">A share register, enforced by the token itself.</h2>
+      <h2 style="font-size:clamp(1.95rem,3.8vw,2.75rem)">A share register, enforced by the token itself.</h2>
       <p class="lede" style="margin-top:1.2rem">Fund shares are a security. Somebody has to decide who may hold them, and be able to act when a court says so. In Carry that somebody is a role on the contract.</p>
 
       <ul class="comp-list">
@@ -606,7 +703,7 @@ section { scroll-margin-top: 84px; }
   </div>
 </section>
 
-<!-- ========== PRICING ========== -->
+<!-- ===== PRICING ===== -->
 <section class="sec pricing" id="pricing">
   <div class="wrap">
     <div class="price-figure rv">
@@ -618,19 +715,17 @@ section { scroll-margin-top: 84px; }
     </div>
 
     <div class="price-row rv">
-      <div class="price-cell"><strong>No subscription fee</strong><span>Every dollar you send buys shares at the prevailing net asset value.</span></div>
+      <div class="price-cell"><strong>No subscription fee</strong><span>Every pound you send buys shares at the prevailing net asset value.</span></div>
       <div class="price-cell"><strong>No redemption fee</strong><span>Exit on any block. No notice period, no gate, no penalty for leaving early.</span></div>
-      <div class="price-cell"><strong>No minimum balance</strong><span>Subscribe a hundred dollars or ten million. The arithmetic is identical.</span></div>
+      <div class="price-cell"><strong>No minimum balance</strong><span>Subscribe a hundred pounds or ten million. The arithmetic is identical.</span></div>
     </div>
   </div>
 </section>
 
-<!-- ========== FAQ ========== -->
+<!-- ===== FAQ ===== -->
 <section class="sec" id="faq">
   <div class="wrap">
-    <div class="sec-head rv">
-      <h2>Questions a finance team asks.</h2>
-    </div>
+    <div class="sec-head rv"><h2>Questions a finance team asks.</h2></div>
 
     <div class="faq-list rv">
       <details>
@@ -661,7 +756,7 @@ section { scroll-margin-top: 84px; }
   </div>
 </section>
 
-<!-- ========== CLOSING CTA ========== -->
+<!-- ===== CTA ===== -->
 <section class="sec cta">
   <div class="wrap cta-grid rv">
     <div>
@@ -670,7 +765,7 @@ section { scroll-margin-top: 84px; }
     </div>
     <div>
       <form class="waitlist" id="waitlist" novalidate>
-        <label for="email" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Work email</label>
+        <label for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Work email</label>
         <input id="email" type="email" name="email" placeholder="you@company.com" autocomplete="email" />
         <button class="btn btn-primary" type="submit">Request access</button>
       </form>
@@ -681,19 +776,18 @@ section { scroll-margin-top: 84px; }
 
 </main>
 
-<!-- ========== FOOTER ========== -->
 <footer class="foot">
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="brand" href="#top" style="margin-bottom:.8rem">
+        <a class="brand" href="#top" style="margin-bottom:.9rem">
           <svg class="brand-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect x="1.5" y="1.5" width="21" height="21" rx="6" stroke="currentColor" stroke-width="1.6"/>
-            <path d="M7 15.5c3.2 0 3.2-7 6.4-7 1.6 0 2.4 1.75 3.2 3.5" stroke="#f59e0b" stroke-width="1.9" stroke-linecap="round"/>
+            <rect x="1.5" y="1.5" width="21" height="21" rx="6.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6.6 15.8c3.3 0 3.3-7.2 6.6-7.2 1.7 0 2.5 1.8 3.3 3.6" stroke="#f0990a" stroke-width="2" stroke-linecap="round"/>
           </svg>
           Carry
         </a>
-        <p style="font-size:.88rem;color:var(--text-mid);max-width:34ch">Treasury yield for companies holding idle cash. Built on Ethereum.</p>
+        <p style="font-size:.88rem;color:var(--text-mid);max-width:32ch">Treasury yield for companies holding idle cash. Built on Ethereum.</p>
       </div>
       <div>
         <h4>Product</h4>
@@ -728,13 +822,12 @@ section { scroll-margin-top: 84px; }
   var FUND = "0xd1f36EE39eAAC22E42aE9365300D24f07c515C87";
   var USDC = "0x941B691563DF3114368d41498d9e669e10ACCC8b";
   var RPC  = "https://ethereum-sepolia-rpc.publicnode.com";
-  var CHAIN_HEX = "0xaa36a7"; // 11155111
+  var CHAIN_HEX = "0xaa36a7";
 
   var FUND_ABI = [
     "function navPerShareCheckpoint() view returns (uint256)",
     "function lastAccrualTime() view returns (uint256)",
     "function annualRateBps() view returns (uint256)",
-    "function currentNavPerShare() view returns (uint256)",
     "function totalSupply() view returns (uint256)",
     "function totalAssetsUnderManagement() view returns (uint256)",
     "function assetsHeld() view returns (uint256)",
@@ -754,9 +847,8 @@ section { scroll-margin-top: 84px; }
 
   var $ = function (id) { return document.getElementById(id); };
 
-  // ---- formatting -------------------------------------------------
+  // ---------- formatting ----------
   function navText(nav, places) {
-    // nav is 18-decimal fixed point. 1e18 == $1.00
     var whole = nav / 1000000000000000000n;
     var frac = (nav % 1000000000000000000n).toString().padStart(18, "0").slice(0, places);
     return whole.toString() + "." + frac;
@@ -767,50 +859,41 @@ section { scroll-margin-top: 84px; }
     var s = whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return places > 0 ? s + "." + frac : s;
   }
+  function gbp(n) { return "£" + Math.round(n).toLocaleString("en-GB"); }
 
-  // ---- live NAV ---------------------------------------------------
+  // ---------- live NAV ----------
   var checkpoint = null, lastAccrual = null, rateBps = null;
-  var SECONDS_PER_YEAR = 31536000n, BPS = 10000n;
+  var SPY = 31536000n, BPS = 10000n;
 
   function navNow() {
     if (checkpoint === null) return null;
     var now = BigInt(Math.floor(Date.now() / 1000));
     var elapsed = now > lastAccrual ? now - lastAccrual : 0n;
     if (elapsed === 0n || rateBps === 0n) return checkpoint;
-    return checkpoint + (checkpoint * rateBps * elapsed) / (BPS * SECONDS_PER_YEAR);
+    return checkpoint + (checkpoint * rateBps * elapsed) / (BPS * SPY);
   }
 
   function paintNav() {
     var nav = navNow();
     if (nav === null) return;
-    var full = navText(nav, 10);
-    var head = full.slice(0, full.indexOf(".") + 5);
-    var tail = full.slice(full.indexOf(".") + 5);
+    var full = navText(nav, 10), dot = full.indexOf(".");
     var big = $("navBig");
-    if (big) big.innerHTML = "$" + head + '<span class="tail">' + tail + "</span>";
+    if (big) big.innerHTML = "$" + full.slice(0, dot + 5) + '<span class="tail">' + full.slice(dot + 5) + "</span>";
     var small = $("fNav");
     if (small) small.textContent = "$" + navText(nav, 8);
   }
 
-  // ---- read-only load ---------------------------------------------
   var reader = new ethers.JsonRpcProvider(RPC, 11155111, { staticNetwork: true });
   var fundRO = new ethers.Contract(FUND, FUND_ABI, reader);
 
   function load() {
     Promise.all([
-      fundRO.navPerShareCheckpoint(),
-      fundRO.lastAccrualTime(),
-      fundRO.annualRateBps(),
-      fundRO.totalSupply(),
-      fundRO.totalAssetsUnderManagement(),
-      fundRO.assetsHeld(),
-      fundRO.isFullyBacked()
+      fundRO.navPerShareCheckpoint(), fundRO.lastAccrualTime(), fundRO.annualRateBps(),
+      fundRO.totalSupply(), fundRO.totalAssetsUnderManagement(), fundRO.assetsHeld(), fundRO.isFullyBacked()
     ]).then(function (r) {
       checkpoint = r[0]; lastAccrual = r[1]; rateBps = r[2];
       var supply = r[3], aum = r[4], held = r[5], backed = r[6];
-
       var rate = (Number(rateBps) / 100).toFixed(2) + "%";
-      var backedText = backed ? "Fully backed" : "Yield outstanding";
 
       $("sRate").textContent = rate;
       $("sAum").textContent = money6(aum, 2);
@@ -822,7 +905,7 @@ section { scroll-margin-top: 84px; }
       $("fAum").textContent = money6(aum, 2);
       $("fHeld").textContent = money6(held, 2);
       $("fSupply").textContent = money6(supply, 2);
-      $("fBacked").textContent = backedText;
+      $("fBacked").textContent = backed ? "Fully backed" : "Yield outstanding";
       $("fBacked").style.color = backed ? "var(--pos)" : "var(--accent)";
 
       $("navSub").textContent = "Priced from the chain clock at " + rate + " a year";
@@ -839,32 +922,102 @@ section { scroll-margin-top: 84px; }
   setInterval(load, 30000);
   setInterval(paintNav, 500);
 
-  // ---- wallet -----------------------------------------------------
+  // ---------- accrual chart ----------
+  // Single comparison, two series, both direct-labelled and in the legend.
+  // Simple interest, matching how the contract accrues.
+  (function chart() {
+    var svg = $("chart"), box = $("chartBox"), tip = $("tip");
+    if (!svg) return;
+
+    var P0 = 250000, NET = 0.0485, CHK = 0.0001, MONTHS = 12;
+    var W = 760, H = 300, L = 8, R = 92, T = 18, B = 40;
+
+    var carry = [], check = [];
+    for (var m = 0; m <= MONTHS; m++) {
+      carry.push(P0 * (1 + NET * m / 12));
+      check.push(P0 * (1 + CHK * m / 12));
+    }
+    var yMin = 248500, yMax = 263500;
+    var X = function (m) { return L + (W - L - R) * (m / MONTHS); };
+    var Y = function (v) { return T + (H - T - B) * (1 - (v - yMin) / (yMax - yMin)); };
+
+    function path(arr) {
+      return arr.map(function (v, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); }).join(" ");
+    }
+
+    var grid = "", ticks = [250000, 254000, 258000, 262000];
+    ticks.forEach(function (v) {
+      grid += '<line x1="' + L + '" y1="' + Y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + Y(v).toFixed(1) +
+              '" stroke="var(--border)" stroke-width="1"/>' +
+              '<text x="' + L + '" y="' + (Y(v) - 7).toFixed(1) + '" fill="var(--text-dim)" font-size="11" ' +
+              'font-family="JetBrains Mono, monospace">' + gbp(v) + '</text>';
+    });
+
+    var xlab = "";
+    [0, 3, 6, 9, 12].forEach(function (m) {
+      xlab += '<text x="' + X(m).toFixed(1) + '" y="' + (H - 12) + '" fill="var(--text-dim)" font-size="11" ' +
+              'text-anchor="' + (m === 0 ? "start" : "middle") + '" font-family="JetBrains Mono, monospace">' +
+              (m === 0 ? "Today" : m + "m") + "</text>";
+    });
+
+    svg.innerHTML =
+      '<defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="var(--accent-line)" stop-opacity=".2"/>' +
+      '<stop offset="100%" stop-color="var(--accent-line)" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      grid + xlab +
+      '<path d="' + path(carry) + " L" + X(MONTHS).toFixed(1) + " " + Y(yMin).toFixed(1) +
+        " L" + X(0).toFixed(1) + " " + Y(yMin).toFixed(1) + ' Z" fill="url(#cf)"/>' +
+      '<path d="' + path(check) + '" fill="none" stroke="var(--text-dim)" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>' +
+      '<path d="' + path(carry) + '" fill="none" stroke="var(--accent-line)" stroke-width="2" stroke-linecap="round"/>' +
+      '<circle cx="' + X(MONTHS).toFixed(1) + '" cy="' + Y(carry[MONTHS]).toFixed(1) + '" r="4.5" fill="var(--accent-line)"/>' +
+      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(carry[MONTHS]) - 2).toFixed(1) + '" fill="var(--text)" font-size="13" font-weight="500" font-family="JetBrains Mono, monospace">' + gbp(carry[MONTHS]) + '</text>' +
+      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(carry[MONTHS]) + 14).toFixed(1) + '" fill="var(--text-mid)" font-size="11">Carry</text>' +
+      '<circle cx="' + X(MONTHS).toFixed(1) + '" cy="' + Y(check[MONTHS]).toFixed(1) + '" r="4" fill="var(--text-dim)"/>' +
+      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(check[MONTHS]) + 4).toFixed(1) + '" fill="var(--text-mid)" font-size="13" font-family="JetBrains Mono, monospace">' + gbp(check[MONTHS]) + '</text>' +
+      '<text x="' + (X(MONTHS) + 12) + '" y="' + (Y(check[MONTHS]) + 20).toFixed(1) + '" fill="var(--text-dim)" font-size="11">Checking</text>' +
+      '<line id="cx" x1="0" y1="' + T + '" x2="0" y2="' + (H - B) + '" stroke="var(--border-2)" stroke-width="1" opacity="0"/>' +
+      '<circle id="cd" r="5" fill="var(--accent-line)" stroke="var(--surface)" stroke-width="2" opacity="0"/>';
+
+    var cx = svg.querySelector("#cx"), cd = svg.querySelector("#cd");
+
+    function move(ev) {
+      var r = svg.getBoundingClientRect();
+      var px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left) / r.width * W;
+      var m = Math.round(Math.max(0, Math.min(MONTHS, (px - L) / (W - L - R) * MONTHS)));
+      cx.setAttribute("x1", X(m)); cx.setAttribute("x2", X(m)); cx.setAttribute("opacity", ".9");
+      cd.setAttribute("cx", X(m)); cd.setAttribute("cy", Y(carry[m])); cd.setAttribute("opacity", "1");
+      tip.innerHTML = '<div class="tip-m">' + (m === 0 ? "Today" : "Month " + m) + "</div>" +
+        '<div class="tip-r"><span>Carry</span><b>' + gbp(carry[m]) + "</b></div>" +
+        '<div class="tip-r"><span>Checking</span><b>' + gbp(check[m]) + "</b></div>";
+      // Keep the tooltip inside the figure at both ends of the series.
+      tip.style.left = Math.min(88, Math.max(12, X(m) / W * 100)) + "%";
+      tip.style.top = (Y(carry[m]) / H * r.height) + "px";
+      tip.classList.add("on");
+    }
+    function leave() { cx.setAttribute("opacity", "0"); cd.setAttribute("opacity", "0"); tip.classList.remove("on"); }
+
+    box.addEventListener("pointermove", move);
+    box.addEventListener("pointerleave", leave);
+  })();
+
+  // ---------- wallet ----------
   var signer = null, account = null, fundRW = null, usdcRW = null;
-
-  function note(html) {
-    var el = $("txNote");
-    el.hidden = false;
-    el.innerHTML = html;
-  }
-
+  function note(html) { var el = $("txNote"); el.hidden = false; el.innerHTML = html; }
   function short(a) { return a.slice(0, 6) + "..." + a.slice(-4); }
 
   function refreshUser() {
     if (!account) return;
     var usdcRO = new ethers.Contract(USDC, USDC_ABI, reader);
     Promise.all([
-      fundRO.balanceOf(account),
-      fundRO.balanceInAssets(account),
-      usdcRO.balanceOf(account),
-      fundRO.isWhitelisted(account)
+      fundRO.balanceOf(account), fundRO.balanceInAssets(account),
+      usdcRO.balanceOf(account), fundRO.isWhitelisted(account)
     ]).then(function (r) {
       $("uShares").textContent = money6(r[0], 6);
       $("uValue").textContent = money6(r[1], 2);
       $("uUsdc").textContent = money6(r[2], 2);
-      var ok = r[3];
-      $("notWhitelisted").hidden = ok;
-      $("tradePanel").hidden = !ok;
+      $("notWhitelisted").hidden = r[3];
+      $("tradePanel").hidden = !r[3];
     }).catch(function (e) { console.error(e); });
   }
 
@@ -873,9 +1026,7 @@ section { scroll-margin-top: 84px; }
       note("No browser wallet found. Install MetaMask to subscribe. Every figure above is still live without one.");
       return;
     }
-    var btn = this;
-    btn.disabled = true;
-    btn.textContent = "Connecting";
+    var btn = this; btn.disabled = true; btn.textContent = "Connecting";
     var bp = new ethers.BrowserProvider(window.ethereum);
     bp.send("eth_requestAccounts", [])
       .then(function () { return window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: CHAIN_HEX }] }).catch(function () {}); })
@@ -891,8 +1042,7 @@ section { scroll-margin-top: 84px; }
       })
       .catch(function (e) {
         btn.disabled = false; btn.textContent = "Connect wallet";
-        note("Connection cancelled.");
-        console.error(e);
+        note("Connection cancelled."); console.error(e);
       });
   });
 
@@ -903,36 +1053,25 @@ section { scroll-margin-top: 84px; }
   }
 
   function run(btn, label, work) {
-    btn.disabled = true;
-    var old = btn.textContent;
-    btn.textContent = label;
+    btn.disabled = true; var old = btn.textContent; btn.textContent = label;
     work().then(function (tx) {
       note("Sent. <a href='https://sepolia.etherscan.io/tx/" + tx.hash + "'>" + short(tx.hash) + "</a> Waiting for confirmation.");
       return tx.wait();
     }).then(function (rc) {
-      note("Confirmed in block " + rc.blockNumber + ".");
-      refreshUser(); load();
+      note("Confirmed in block " + rc.blockNumber + "."); refreshUser(); load();
     }).catch(function (e) {
-      note("Rejected: " + (e.shortMessage || e.reason || e.message || "unknown error"));
-      console.error(e);
-    }).finally(function () {
-      btn.disabled = false; btn.textContent = old;
-    });
+      note("Rejected: " + (e.shortMessage || e.reason || e.message || "unknown error")); console.error(e);
+    }).finally(function () { btn.disabled = false; btn.textContent = old; });
   }
 
-  function faucet() {
-    run(this, "Minting", function () { return usdcRW.mint(account, ethers.parseUnits("10000", 6)); });
-  }
+  function faucet() { run(this, "Minting", function () { return usdcRW.mint(account, ethers.parseUnits("10000", 6)); }); }
   $("btnFaucet").addEventListener("click", faucet);
   $("btnFaucet2").addEventListener("click", faucet);
 
   $("btnSubscribe").addEventListener("click", function () {
     var amt = parseAmt();
     if (amt === null) { note("Enter a positive amount with at most six decimal places."); return; }
-    var btn = this;
-    btn.disabled = true;
-    var old = btn.textContent;
-    btn.textContent = "Checking";
+    var btn = this; btn.disabled = true; var old = btn.textContent; btn.textContent = "Checking";
     var usdcRO = new ethers.Contract(USDC, USDC_ABI, reader);
     usdcRO.allowance(account, FUND).then(function (allow) {
       if (allow >= amt) return null;
@@ -946,14 +1085,10 @@ section { scroll-margin-top: 84px; }
       note("Sent. <a href='https://sepolia.etherscan.io/tx/" + tx.hash + "'>" + short(tx.hash) + "</a> Waiting for confirmation.");
       return tx.wait();
     }).then(function (rc) {
-      note("Subscribed in block " + rc.blockNumber + ".");
-      refreshUser(); load();
+      note("Subscribed in block " + rc.blockNumber + "."); refreshUser(); load();
     }).catch(function (e) {
-      note("Rejected: " + (e.shortMessage || e.reason || e.message || "unknown error"));
-      console.error(e);
-    }).finally(function () {
-      btn.disabled = false; btn.textContent = old;
-    });
+      note("Rejected: " + (e.shortMessage || e.reason || e.message || "unknown error")); console.error(e);
+    }).finally(function () { btn.disabled = false; btn.textContent = old; });
   });
 
   $("btnRedeem").addEventListener("click", function () {
@@ -962,38 +1097,40 @@ section { scroll-margin-top: 84px; }
     run(this, "Redeeming", function () { return fundRW.redeem(amt); });
   });
 
-  // ---- waitlist ---------------------------------------------------
-  // Opens the visitor's mail client. Swap CONTACT for your own address,
-  // or point this at a form endpoint once you have one.
+  // ---------- waitlist ----------
   var CONTACT = "hello@carry.fund";
   var wl = $("waitlist");
   if (wl) {
     wl.addEventListener("submit", function (ev) {
       ev.preventDefault();
-      var input = $("email");
-      var note = $("waitlistNote");
-      var val = input.value.trim();
+      var input = $("email"), note2 = $("waitlistNote"), val = input.value.trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
-        note.textContent = "That does not look like an email address. Check it and try again.";
-        note.classList.add("is-err");
-        input.focus();
-        return;
+        note2.textContent = "That does not look like an email address. Check it and try again.";
+        note2.classList.add("is-err"); input.focus(); return;
       }
-      note.classList.remove("is-err");
-      note.textContent = "Opening your mail client. Send the draft and we will reply.";
+      note2.classList.remove("is-err");
+      note2.textContent = "Opening your mail client. Send the draft and we will reply.";
       window.location.href = "mailto:" + CONTACT +
         "?subject=" + encodeURIComponent("Private beta access") +
         "&body=" + encodeURIComponent("Work email: " + val + "\n\nWhere our reserves sit today:\n");
     });
   }
 
-  // ---- scroll reveal ----------------------------------------------
+  // ---------- nav shadow + reveal ----------
+  var navEl = $("nav"), sentinel = document.createElement("div");
+  sentinel.style.cssText = "position:absolute;top:0;height:1px;width:1px";
+  document.body.prepend(sentinel);
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver(function (e) { navEl.classList.toggle("stuck", !e[0].isIntersecting); })
+      .observe(sentinel);
+  }
+
   if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches && "IntersectionObserver" in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
       });
-    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+    }, { threshold: .12, rootMargin: "0px 0px -8% 0px" });
     document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); });
   } else {
     document.querySelectorAll(".rv").forEach(function (el) { el.classList.add("in"); });
