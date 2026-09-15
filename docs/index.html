@@ -590,7 +590,7 @@ section { scroll-margin-top: 86px; }
         <div style="margin-bottom:auto"><div class="bstep">Redeem</div></div>
         <div>
           <h3>Out on any block</h3>
-          <p>Burn shares, receive stablecoin at the current price. There is no notice period and no queue, because there is nothing to liquidate first.</p>
+          <p>Burn shares, receive stablecoin at the price of that block. Redemptions come out of a cash buffer, so the next day settlement on a Treasury bill never reaches you. When the buffer runs low the contract refuses rather than pays late.</p>
         </div>
       </article>
     </div>
@@ -716,7 +716,7 @@ section { scroll-margin-top: 86px; }
 
     <div class="price-row rv">
       <div class="price-cell"><strong>No subscription fee</strong><span>Every pound you send buys shares at the prevailing net asset value.</span></div>
-      <div class="price-cell"><strong>No redemption fee</strong><span>Exit on any block. No notice period, no gate, no penalty for leaving early.</span></div>
+      <div class="price-cell"><strong>No redemption fee</strong><span>Exit on any block, paid from the cash buffer. No notice period and no penalty for leaving early.</span></div>
       <div class="price-cell"><strong>No minimum balance</strong><span>Subscribe a hundred pounds or ten million. The arithmetic is identical.</span></div>
     </div>
   </div>
@@ -734,7 +734,7 @@ section { scroll-margin-top: 86px; }
       </details>
       <details>
         <summary>How quickly can I get the money out?</summary>
-        <div class="answer">One transaction. Redemption burns your shares and returns stablecoin at the price of that block. There is no settlement queue, because there is nothing to sell in order to pay you. Traditional money market funds settle next day at best, and can gate redemptions under stress.</div>
+        <div class="answer">One transaction, paid out of the fund's cash buffer. It is worth being precise about why that is possible, because the two halves move at different speeds. The token settles in seconds. A Treasury bill does not: bill trades settle the next business day, and only while the market is open. Funds bridge that gap by holding a slice of the portfolio in cash, and larger ones also work with a market maker who fronts the money and carries the timing risk. Carry pays from its buffer, and when the buffer cannot cover a redemption the contract reverts rather than settling late. Traditional money market funds settle next day at best and can gate redemptions under stress.</div>
       </details>
       <details>
         <summary>What stops the fund promising yield it cannot pay?</summary>

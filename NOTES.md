@@ -122,7 +122,13 @@ tested contract beats a larger untested one.
 ## Open questions to resolve
 
 - Management fee: include or leave out of scope? (Real funds charge 0.2-0.5%)
-- Redemption: instant, or add a queue to model real settlement delay?
+- Redemption: instant, or add a queue to model real settlement delay? Resolved in
+  favour of instant-from-buffer, which is what real funds do. The token settles in
+  seconds but a Treasury bill settles T+1 and only in market hours, so the gap is
+  bridged by holding a slice in cash, and at size by a market maker who fronts the
+  money. `redeem` pays from `assetsHeld` and reverts with `InsufficientLiquidity`
+  when the buffer cannot cover it, which is the honest failure rather than a late
+  settlement. A queue would model the manager's side of that, not the holder's.
 - Should `depositYield` be callable by anyone, or stay admin-only? Admin-only
   today, which mirrors a manager settling T-bill proceeds.
 
